@@ -1,0 +1,8 @@
+{
+    "upload_to_wandb": {
+        "inputs": [
+            {"name": "results_folder", "kind": "required", "type": "filepath"}
+        ],
+        "outputs": []
+    }
+}

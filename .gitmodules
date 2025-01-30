@@ -1,0 +1,3 @@
+[submodule "libraries/mgh/fortran"]
+	path = libraries/mgh/fortran
+	url = git@github.com:johngardenghi/mgh.git
