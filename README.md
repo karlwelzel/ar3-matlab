@@ -14,7 +14,9 @@ It is recommended to install the Optimization Toolbox and the Deep Learning Tool
 
 ## Folder structure
 
-* `experiments`: contains scripts to test behaviour and performance of AR2 and AR3
+* `experiments`: contains scripts to generate experiments
+  * `experiments/ExperimentProject` contains scripts to construct and test AR2 and AR3
+  * `experiments/GeneratingPlots` contains the all runs, Matlab experiment manager settins and codes for regenerating all plots
 * `libraries`: contains the necessary libraries
   * `libraries/ar3` contains the implementation of AR2 and AR3
   * `libraries/mgh` contains the wrapper for the Fortran code for the MGH test functions
