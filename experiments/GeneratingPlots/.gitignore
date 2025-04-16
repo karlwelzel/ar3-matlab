@@ -1,0 +1,17 @@
+*.pgf
+*.pdf
+2vs3
+benchmark
+interpolation
+prerejection
+sigma0
+theta
+theta_GN
+updates
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# NFS temp files
+.nfs*
