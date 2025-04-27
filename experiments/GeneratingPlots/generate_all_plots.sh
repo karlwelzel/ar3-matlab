@@ -10,14 +10,6 @@ PYTHON="../../.venv/bin/python"
 
 echo "Using Python: $PYTHON"
 
-# Create output folders if they don't already exist
-for folder in 2vs3 benchmark interpolation prerejection sigma0 theta theta_GN updates; do
-    if [ ! -d "$folder" ]; then
-        mkdir "$folder"
-        echo "Created folder: $folder"
-    fi
-done
-
 # Generate performance profile plots for different experimental settings
 "$PYTHON" "wandb2performance_profiles sigma0.py"
 "$PYTHON" "wandb2performance_profiles interpolation.py"
