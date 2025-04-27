@@ -138,6 +138,18 @@ def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
     return histories
 
 
+def merge_histories_from_files(groups: list[str]) -> dict[str, Any]:
+    histories = dict()
+    for group in groups:
+        cache_file = pathlib.Path(f"{group}_cache.bin")
+        if not cache_file.exists():
+            raise FileNotFoundError(f"Cache file for group '{group}' not found: {cache_file}")
+        with open(cache_file, "rb") as f:
+            group_histories = pickle.load(f)
+            histories.update(group_histories)
+    return histories
+
+
 # functions for performance profiles
 def gpp_dumps(method_config, problem_setup_config):
     method, problem_setup = json.dumps(method_config), json.dumps(
