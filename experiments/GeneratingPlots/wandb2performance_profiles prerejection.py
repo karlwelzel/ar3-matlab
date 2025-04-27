@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -78,6 +79,7 @@ for inner_stop_rule in ["First_Order", "ARP_Theory"]:
         r"\textsf{AR$3$-Interp\textsuperscript{+}}",
     ]
 
+    os.makedirs("prerejection", exist_ok=True)
     filename_prefix = f"prerejection/performance_profile {inner_stop_rule}"
 
     set_plot_asthetics()

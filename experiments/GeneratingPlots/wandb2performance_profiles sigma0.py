@@ -1,6 +1,6 @@
 import wandb
 import json
-from wandb_tools import CategorizedRun
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -76,6 +76,7 @@ new_labels = [
     r"$\sigma_0$: \texttt{Taylor}",
 ]
 
+os.makedirs("sigma0", exist_ok=True)
 filename_prefix = f"sigma0/performance_profile {inner_stop_rule}"
 
 set_plot_asthetics()

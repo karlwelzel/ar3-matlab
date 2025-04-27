@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -144,6 +145,7 @@ new_labels = [
     r"\textsf{AR$3$-BGMS/Gencan}" + "\n" + theta_tc.format(exp=2, exp2=3),
 ]
 
+os.makedirs("benchmark", exist_ok=True)
 filename_prefix = "benchmark/performance_profile"
 
 set_plot_asthetics()

@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import convergence_dot_plot
@@ -109,6 +110,7 @@ for p in [2, 3]:
             fig_scale = 0.85,
         )
 
+    os.makedirs("theta_GN", exist_ok=True)
     filename = f"theta_GN/convergence {update_type} {p}.pgf"
     grid.figure.savefig(filename, dpi=100)
     print(f"Saved {filename!r}")

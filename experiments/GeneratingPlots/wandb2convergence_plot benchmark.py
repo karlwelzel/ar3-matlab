@@ -1,13 +1,14 @@
 import wandb
 import json
-from wandb_tools import cache_run_histories
+import os
+from wandb_tools import merge_histories_from_files
 from wandb_tools import categorize_runs
 from wandb_tools import convergence_dot_plot
 from wandb_tools import set_plot_asthetics
 
 
 groups = ["Exp_Benchmark_0", "Exp_Benchmark_3"]
-histories = cache_run_histories(groups)
+histories = merge_histories_from_files(groups)
 
 # Filter runs
 api = wandb.Api(timeout=10000)
@@ -15,7 +16,7 @@ api = wandb.Api(timeout=10000)
 wandb_runs = api.runs(
     path="ar3-project/all_experiments",
     filters={
-        "group": {"$ne": "Exp_Benchmark_6"},
+        "group": {"$in": groups},
         "tags": "benchmark",
         "$and": [
             {
@@ -88,6 +89,7 @@ wandb_runs = api.runs(
         ],
     },
 )
+
 
 # Categorize runs
 method_parameters = [
@@ -162,6 +164,7 @@ grid = convergence_dot_plot(
     col_titles=custom_titles,
 )
 
+os.makedirs("benchmark", exist_ok=True)
 filename = "benchmark/convergence.pgf"
 grid.figure.savefig(filename, dpi=100)
 print(f"Saved {filename!r}")

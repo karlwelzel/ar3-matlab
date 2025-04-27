@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -107,6 +108,7 @@ for tag_filter in ["training", "benchmark", "extra", "regularized-cubic"]:
         r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + theta_tc.format(exp=2),
     ]
 
+    os.makedirs("2vs3", exist_ok=True)
     filename_prefix = f"2vs3/performance_profile {tag_filter}"
 
     set_plot_asthetics()

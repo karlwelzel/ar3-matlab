@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import convergence_dot_plot
@@ -92,6 +93,7 @@ for inner_stop_rule in ["First_Order", "ARP_Theory"]:
         col_titles=custom_titles,
     )
 
+    os.makedirs("prerejection", exist_ok=True)
     filename = f"prerejection/convergence {inner_stop_rule}.pgf"
     grid.figure.savefig(filename, dpi=100)
     print(f"Saved {filename!r}")

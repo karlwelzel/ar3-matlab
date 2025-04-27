@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -82,6 +83,7 @@ for p in [2, 3]:
             r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
         ]
 
+    os.makedirs("theta_GN", exist_ok=True)
     filename_prefix = f"theta_GN/performance_profile {p} {update_type}"
 
     set_plot_asthetics()

@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -78,6 +79,7 @@ new_labels = [
     r"\textsf{AR$3$-Interp}",
 ]
 
+os.makedirs("interpolation", exist_ok=True)
 filename_prefix = f"interpolation/performance_profile {inner_stop_rule}"
 
 set_plot_asthetics()

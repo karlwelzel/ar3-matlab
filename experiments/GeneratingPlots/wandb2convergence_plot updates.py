@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import convergence_dot_plot
@@ -110,6 +111,7 @@ grid = convergence_dot_plot(
     legend_ncols=2,
 )
 
+os.makedirs("updates", exist_ok=True)
 filename = f"updates/convergence {inner_stop_rule}.pgf"
 grid.figure.savefig(filename, dpi=100)
 print(f"Saved {filename!r}")

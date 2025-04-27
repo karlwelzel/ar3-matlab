@@ -1,5 +1,6 @@
 import wandb
 import json
+import os
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -150,6 +151,7 @@ for p in [2, 3]:
             r"\textsf{AR$3$-Simple\textsuperscript{+}}" + "\n" + gn_tc,
         ]
 
+    os.makedirs("theta_GN", exist_ok=True)
     filename_prefix = f"theta_GN/performance_profile {generate_type} {p}"
 
     set_plot_asthetics()
