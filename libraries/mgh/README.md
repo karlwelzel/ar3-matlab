@@ -10,8 +10,13 @@ The interface was written by Nick Gould and slightly adapted by Karl Welzel.
 
 ## Compilation
 
-To compile the Matlab interface file on Linux, run `./compile.sh` or follow the steps within it.
-
+To compile the Matlab interface on Linux, use `git submodule update --init` to initialize the submodule that points to https://github.com/johngardenghi/mgh and run
+```bash
+gfortran -O3 -c -o set_precision.o fortran/set_precision.f90
+gfortran -O3 -c -o mgh.o fortran/mgh.90 -lm
+mex -largeArrayDims set_precision.o mgh.o mgh.F90
+```
+from within the current folder.
 
 ## Usage
 

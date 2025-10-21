@@ -34,7 +34,13 @@ All directory paths will be relative to this base folder from now on.
 ### Compile the MGH MATLAB wrapper (optional)
 
 The `libraries/mgh` folder contains `mgh.mexa64` which makes it possible to call the Fortran routines implementing evaluations of the MGH function and derivatives from within MATLAB.
-To compile this wrapper yourself, use `git submodule update --init` to initialize the submodule that points to https://github.com/johngardenghi/mgh and call `./compile.sh` from within the `libraries/mgh` folder.
+To compile this wrapper yourself, use `git submodule update --init` to initialize the submodule that points to https://github.com/johngardenghi/mgh and run
+```bash
+gfortran -O3 -c -o set_precision.o fortran/set_precision.f90
+gfortran -O3 -c -o mgh.o fortran/mgh.90 -lm
+mex -largeArrayDims set_precision.o mgh.o mgh.F90
+```
+from within the `libraries/mgh` folder.
 
 ### Set up a Python virtual environment
 
@@ -78,7 +84,7 @@ upload_to_wandb Results/TestExperiment_Result4_20240612T174612/
 ### Regenerate All plots in the 'experiments/ExperimentProject' folder
 
 To regenerate all convergence dot plots and performance profile plots from the paper, first update the hyperparameter settings in "Experiment Manager" by loading each ".mat" files under `GeneratingPlots` and running it. This will generates 3,215 runs; see "Experiment Manager" with each `.mat` file for specific hyperparameter configurations.
-Although all data is available on Weights and Biases for visualization, offline copies are also stored in three `.bin` files in `GeneratingPlots`. 
+Although all data is available on Weights and Biases for visualization, offline copies are also stored in three `.bin` files in `GeneratingPlots`.
 Each Python script in `GeneratingPlots` folder contains specific filters to regenerate a particular plot from the paper.
 
 ## Code style
