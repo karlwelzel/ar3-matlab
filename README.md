@@ -42,6 +42,8 @@ mex -largeArrayDims set_precision.o mgh.o mgh.F90
 ```
 from within the `libraries/mgh` folder.
 
+Alternatively, if you have downloaded the code as a ZIP file, copy the contents of the https://github.com/johngardenghi/mgh repository in the `libraries/mgh/fortran` folder before following the instructions above.
+
 ### Set up a Python virtual environment
 
 This project makes use of [Weights and Biases](https://wandb.ai) to store the results of individual runs.
@@ -52,6 +54,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install wandb==0.17.9
 ```
+
+For compatibility between MATLAB and Python versions check https://www.mathworks.com/support/requirements/python-compatibility.html.
+You might need to use a different Python version that one pre-installed with your OS.
 
 ### Open MATLAB
 
