@@ -11,8 +11,8 @@ format short g;
 
 % AR2 or AR3
 p = {
-     2
-     % 3
+     % 2
+     3
     };
 
 % Choose initial sigma0
