@@ -23,8 +23,8 @@ update_sigma0 = {
 
 % Different test problems
 problems = {
-            1 % MGH test, 1 to 35
-            % 'rosenbrock' % Multidimensional Rosenbrock
+            % 1 % MGH test, 1 to 35
+            'rosenbrock' % Multidimensional Rosenbrock
             % 'nonlinear_least_squares'
             % 'ill_cond_bm' % Well-conditioned Regularized 3rd-order polynomials
             % 'ill_cond_H' % Ill-conditioned Hessian ...
