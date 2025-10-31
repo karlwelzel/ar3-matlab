@@ -50,10 +50,10 @@ To use its Python library we need to install it in a virtual environment:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install wandb
+pip install wandb==0.17.9
 ```
 
-### Open MATLAB and get into 'experiments' folder
+### Open MATLAB
 
 Start MATLAB inside the `ExperimentProject` folder and run `setup` before issuing any other commands.
 This will add all relevant files to the MATLAB path and ensure the Python executable from the virtual environment is used.
@@ -81,11 +81,28 @@ For example:
 ```Matlab
 upload_to_wandb Results/TestExperiment_Result4_20240612T174612/
 ```
-### Regenerate All plots in the 'experiments/ExperimentProject' folder
 
-To regenerate all convergence dot plots and performance profile plots from the paper, first update the hyperparameter settings in "Experiment Manager" by loading each ".mat" files under `GeneratingPlots` and running it. This will generates 3,215 runs; see "Experiment Manager" with each `.mat` file for specific hyperparameter configurations.
-Although all data is available on Weights and Biases for visualization, offline copies are also stored in three `.bin` files in `GeneratingPlots`.
-Each Python script in `GeneratingPlots` folder contains specific filters to regenerate a particular plot from the paper.
+### Rerun all experiments
+
+To rerun all experiments that went into the graphs in the paper, first copy over each ".mat" file under `GeneratingPlots` to `ExperimentProject`, add them to the project, open the "Experiment Manager" as explained above and run each experiment.
+This will generate 3,215 runs in total, each with a different combination of parameters.
+
+Using the `upload_to_wandb` script as explained above you can upload the results to the weights and biases servers using the project and group name specified in the experiment settings.
+Afterwards, you can view and access the raw data using their cloud platform.
+
+
+### Regenerate all plots
+
+To regenerate all convergence dot plots and performance profile plots from the paper, you can use the raw data for our runs, which is available publicly at https://wandb.ai/ar3-project/all_experiments.
+
+After activating your local Python installation, run
+```bash
+pip install wandb==0.17.9 matplotlib pandas seaborn
+wandb login
+```
+and then start the relevant plotting script, for example `python "wandb2convergence_plot benchmark.py"`.
+To speed up the plotting, the raw data is cached in the `.bin` files.
+The WandB integration is still necessary to apply the proper filters and download metadata for each run.
 
 ## Code style
 
