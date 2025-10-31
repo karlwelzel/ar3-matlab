@@ -14,7 +14,7 @@ To compile the Matlab interface on Linux, use `git submodule update --init` to i
 ```bash
 gfortran -O3 -c -o set_precision.o fortran/set_precision.f90
 gfortran -O3 -c -o mgh.o fortran/mgh.90 -lm
-mex -largeArrayDims set_precision.o mgh.o mgh.F90
+mex -largeArrayDims set_precision.o mgh.o mgh_wrapper.F90
 ```
 from within the current folder.
 

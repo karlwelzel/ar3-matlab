@@ -1,4 +1,4 @@
-!  MGH -
+!  MGH_WRAPPER -
 !
 !  evaluate values and derivatives of one of the More'-Garbow-Hillstrom
 !  test examples (Matlab interface to fortran MGH package by John L. Gardenghi,
@@ -7,22 +7,22 @@
 !  nick gould, july 16 2023
 
 !  to initialize data structures for a particular problem
-!   [ n, m, name, x_0, status ] = mgh( 'initial',  problem_number, dimension )
+!   [ n, m, name, x_0, status ] = mgh_wrapper( 'initial',  problem_number, dimension )
 !
 !  to evaluate the objective at x
-!   [ f, status ] = mgh( 'eval_f', x )
+!   [ f, status ] = mgh_wrapper( 'eval_f', x )
 !
 !  to evaluate the gradient at x
-!   [ g, status ] = mgh( 'eval_g', x )
+!   [ g, status ] = mgh_wrapper( 'eval_g', x )
 !
 !  to evaluate the Hessian at x
-!   [ h, status ] = mgh( 'eval_h', x )
+!   [ h, status ] = mgh_wrapper( 'eval_h', x )
 !
 !  to evaluate the 3rd derivative tensor at x
-!   [ t, status ] = mgh( 'eval_t', x )
+!   [ t, status ] = mgh_wrapper( 'eval_t', x )
 !
 !  to remove data structures after solution
-!   [ status ] = mgh( 'final' )
+!   [ status ] = mgh_wrapper( 'final' )
 !
 !  Input -
 !   problem_number: integer in the range [1,35] that specifies the example
