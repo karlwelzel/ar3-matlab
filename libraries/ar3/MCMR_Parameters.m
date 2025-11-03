@@ -63,7 +63,12 @@ classdef MCMR_Parameters < Optimization_Parameters
 
             if indefinite
                 try
-                    lambda_min = max(-eigs(mat_lambda, 1, 'smallestreal'), 0) + eps;
+                    if n >= 100
+                        min_eigval = eigs(mat_lambda, 1, 'smallestreal');
+                    else
+                        min_eigval = min(eig(mat_lambda));
+                    end
+                    lambda_min = max(-min_eigval, 0) + eps;
                 catch
                     status = Optimization_Status.ILL_CONDITIONED;
                     best_x = zeros(n, 1);
