@@ -41,7 +41,7 @@ classdef MCMR_Parameters < Optimization_Parameters
             residual = @(x) c + mat * x;
             n = length(c);
             identity = eye(n, n);
-            norm_mat = norm(mat);
+            norm_mat = norm(mat, "fro");
             iteration = 0;
 
             lambda_max = inf;
