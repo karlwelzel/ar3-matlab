@@ -73,9 +73,9 @@ inner_update_type = {
 
 % Termination rule of the inner solver of AR3
 inner_stop_rule = {
-                   'First_Order'
-                   % 'ARP_Theory'
-                   % 'General_Norm'
+                   'First_Order'  % Absolute termination condition (TC.a)
+                   % 'ARP_Theory'  % Relative termination condition (TC.r)
+                   % 'General_Norm'  % Generalized norm termination condition (TC.g) from appendix
                   };
 
 % Run experiment for the given parameters
