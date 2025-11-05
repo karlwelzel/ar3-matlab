@@ -219,8 +219,7 @@ def gpp_costs(
 
 def set_plot_asthetics():
     # Construct the path to 'math.tex'
-    path_to_settings = pathlib.Path.cwd() / ".." / "settings"
-    path_to_settings_str = str(path_to_settings).replace("\\", "/")
+    path_to_settings = pathlib.Path.cwd()
 
     plt.switch_backend("pgf")
     plt.rc(
@@ -229,14 +228,20 @@ def set_plot_asthetics():
         rcfonts=False,
         preamble=rf"""
             \usepackage{{import}}
-            \import{{\detokenize{{{path_to_settings_str}}}}}{{math.tex}}
+            \import{{\detokenize{{{path_to_settings.as_posix()}}}}}{{math.tex}}
             """,
     )
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif", serif="Computer Modern Roman")
-    plt.rc("lines", markersize=2.0, linewidth=1)
+    plt.rc("lines", markersize=1.5, linewidth=1)
     plt.rc("savefig", dpi=300)
 
+    # Change default sizes, "large" -> "medium" and "medium" -> "small"
+    plt.rc("axes", titlesize="medium", labelsize="small")
+    plt.rc("xtick", labelsize="small")
+    plt.rc("ytick", labelsize="small")
+    plt.rc("legend", fontsize="small")
+    plt.rc("figure", titlesize="medium")
 
 def gpp_plot_title(
     cost_measure: str,
