@@ -13,7 +13,7 @@ functions = [
 ]
 
 limits_selection = {  # (p, i): [xleft, xright, ybottom, ytop]
-    (2, 0): [-0.25, 1.5, -0.75, 1],
+    (2, 0): [-0.25, 1.5, -1, 4],
     (2, 1): [-2.8, 1.2, -1.85, 1],
     (3, 0): [-0.6, 3.1, -7, 4],
     (3, 1): [-1.8, 2.2, -2, 3],
@@ -42,7 +42,7 @@ for p in [2, 3]:
                             alpha
                         ) ** (p + 1)
 
-            fig, ax = plt.subplots(figsize=(4, 2.5), layout="tight")
+            fig, ax = plt.subplots(figsize=(3.8, 1.8), layout="tight")
             ax.spines["left"].set_position("zero")
             ax.spines["bottom"].set_position("zero")
             ax.spines["right"].set_color("none")
@@ -76,11 +76,7 @@ for p in [2, 3]:
             for j, sigma in enumerate(sigmas):
                 kwargs = {"color": "blue", "linestyle": "dashed"}
                 if j == 0:
-                    kwargs["label"] = (
-                        r"$m_{{\sigma}}(\alpha)$ with $\sigma \in \{"
-                        + ", ".join(str(sigma_) for sigma_ in sigmas)
-                        + r"\}$"
-                    )
+                    kwargs["label"] = r"$m_{{\sigma}}(\alpha)$"
                 ax.plot(alphas, model(alphas, sigma), **kwargs)
 
             # persistent interval
@@ -96,37 +92,35 @@ for p in [2, 3]:
                 kwargs_span: dict[str, Any] = {"alpha": 0.16}
                 kwargs_line = {"color": "black", "linestyle": "dotted"}
                 if j == 0:
-                    kwargs_span["label"] = "persistent minimizers"
-                    if relaxed:
-                        kwargs_line["label"] = (
-                            r"$\bar{\alpha}$ for $\xi \in \{"
-                            + ", ".join(str(xi_) for xi_ in xis)
-                            + r"\}$"
-                        )
-                    else:
-                        kwargs_line["label"] = r"$\bar{\alpha}$"
+                    kwargs_span["label"] = "persistent mins"
+                    kwargs_line["label"] = r"$\bar{\alpha}$"
 
                 first_transient = True
                 for is_minimizer_group, group in groupby(alphas, key=is_minimizer):
                     group = list(group)
                     if is_minimizer_group and abs(group[0]) < 1e-1:
                         if "label" in kwargs_span:
-                            kwargs_span["label"] = "persistent minimizers"
+                            kwargs_span["label"] = "persistent mins"
                         ax.axvspan(group[0], group[-1], color="blue", **kwargs_span)
                         alpha_bar = group[-1]
                     if is_minimizer_group and not abs(group[0]) < 1e-1 and not relaxed:
                         if "label" in kwargs_span:
                             if first_transient:
-                                kwargs_span["label"] = "transient minimizers"
+                                kwargs_span["label"] = "transient mins"
                             else:
                                 del kwargs_span["label"]
                         ax.axvspan(group[0], group[-1], color="red", **kwargs_span)
                         first_transient = False
 
+                if p == 2 and i == 0 and not relaxed:
+                    # Add legend entry, not visible
+                    ax.axvspan(0, 0, color="red", alpha=0.16, label="transient mins")
+
                 if alpha_bar != limits[1]:
                     ax.axvline(alpha_bar, **kwargs_line)
 
-            ax.legend()
+            if p == 2 and i == 0:
+                ax.legend()
             ax.set_xlim(limits[0], limits[1])
             ax.set_ylim(limits[2], limits[3])
 
