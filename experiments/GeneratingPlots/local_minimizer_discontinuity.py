@@ -184,7 +184,7 @@ for (i, j, _), facet_data in grid.facet_data():
                 xdata=xs,
                 ydata=ys,
                 color=palette(rho_normalize(row["clipped_rho"])),
-                linewidth=3 if row["global"] else 1,
+                linewidth=2 if row["global"] else 1,
                 linestyle=(0, (2, 0.5)) if row["clipped_rho"] < 0 else "-",
             )
             ax.add_line(line)
@@ -200,8 +200,8 @@ colorbar = grid.figure.colorbar(
 )
 
 grid.set(xscale="log", yscale="log")
-grid.figure.set_figwidth(6)
-grid.figure.set_figheight(1.8)
+grid.figure.set_figwidth(4)
+grid.figure.set_figheight(1.2)
 # grid.savefig("local_minimizer_discontinuity.png", dpi=300)
 # grid.savefig("local_minimizer_discontinuity.pgf")
 grid.savefig("local_minimizer_discontinuity.pdf")
