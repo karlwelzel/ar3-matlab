@@ -1,3 +1,4 @@
+import os
 from itertools import groupby
 from typing import Any
 import matplotlib.pyplot as plt
@@ -128,6 +129,8 @@ for p in [2, 3]:
             ax.legend()
             ax.set_xlim(limits[0], limits[1])
             ax.set_ylim(limits[2], limits[3])
+
+            os.makedirs("illustration", exist_ok=True)
             filename = (
                 f"illustration/AR{p} func{i}" + (" relaxed" if relaxed else "") + ".pgf"
             )
