@@ -29,3 +29,7 @@ echo "Using Python: $PYTHON"
 "$PYTHON" "wandb2convergence_plot theta.py"
 "$PYTHON" "wandb2convergence_plot theta_GN.py"
 "$PYTHON" "wandb2convergence_plot benchmark.py"
+
+# Generate special plots
+"$PYTHON" "local_minimizer_discontinuity.py"
+"$PYTHON" "illustration_ARp.py"
