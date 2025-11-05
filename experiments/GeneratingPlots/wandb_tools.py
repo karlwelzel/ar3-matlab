@@ -656,7 +656,7 @@ def convergence_dot_plot(
         legend_height = 0.4 * (len(Evals) / (legend_ncols or len(Evals)))  # inches
         grid.figure.set_size_inches(
             len(grid.col_names) * 1.7 * fig_scale,
-            len(grid.row_names) * 2.3 * fig_scale + legend_height,
+            len(grid.row_names) * 1.7 * fig_scale + legend_height,
         )
         height_ratio = legend_height / grid.figure.get_figheight()
         extra_ratio = 0.05 if col_titles is not None and "\n" in col_titles[0] else 0
@@ -676,7 +676,7 @@ def convergence_dot_plot(
         legend_width = 2  # inches
         grid.figure.set_size_inches(
             len(grid.col_names) * 1.7 + legend_width,
-            len(grid.row_names) * 2.3,
+            len(grid.row_names) * 1.7,
         )
         width_ratio = legend_width / grid.figure.get_figwidth()
         grid.figure.tight_layout(pad=0.5, rect=(width_ratio, 0, 1, 1))
