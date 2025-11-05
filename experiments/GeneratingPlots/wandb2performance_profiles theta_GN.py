@@ -23,7 +23,7 @@ for p in [2, 3]:
             "config.inner_stop_rule": "General_Norm",
             "config.p": p,
             "tags": "training",
-        }
+        },
     )
 
     # Categorize runs
@@ -39,7 +39,7 @@ for p in [2, 3]:
         # if inner_stop_rule == "First_Order":
         #     return (1, 0, method)
         # else:
-            # Ensure thetas are in order
+        #     Ensure thetas are in order
         theta = method_dict.get("inner_stop_theta", 100)
         return (2, theta, method)
 
@@ -68,19 +68,37 @@ for p in [2, 3]:
     if p == 2:
         legend_ncols = 2
         custom_titles = [
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
         ]
     else:
         legend_ncols = None  # default
         custom_titles = [
-            r"\textsf{AR$3$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
         ]
 
     os.makedirs("theta_GN", exist_ok=True)

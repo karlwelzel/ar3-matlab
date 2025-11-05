@@ -69,18 +69,36 @@ for p in [2, 3]:
     if p == 2:
         custom_titles = [
             r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-9}$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^2$",
         ]
     else:
         custom_titles = [
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-9}$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^{-9}$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^3$",
         ]
 
     os.makedirs("theta", exist_ok=True)

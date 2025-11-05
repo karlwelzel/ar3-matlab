@@ -37,9 +37,10 @@ for p in [2, 3]:
     for i, fun in enumerate(functions):
         for relaxed in [False, True]:
             taylor = np.poly1d(fun.coefficients[-p - 1 :])
-            model = lambda alpha, sigma: taylor(alpha) + (sigma / (p + 1)) * abs(
-                alpha
-            ) ** (p + 1)
+            def model(alpha, sigma):
+                return taylor(alpha) + (sigma / (p + 1)) * abs(
+                            alpha
+                        ) ** (p + 1)
 
             fig, ax = plt.subplots(figsize=(4, 2.5), layout="tight")
             ax.spines["left"].set_position("zero")
@@ -84,15 +85,14 @@ for p in [2, 3]:
 
             # persistent interval
             for j, xi in enumerate(xis):
-                is_minimizer = (
-                    lambda alpha: (xi - taylor.deriv(1)(alpha)) * np.sign(alpha) >= 0
-                    and (
-                        taylor.deriv(2)(alpha) * alpha
-                        + p * (xi - taylor.deriv(1)(alpha))
-                    )
-                    * np.sign(alpha)
-                    >= 0
-                )
+                def is_minimizer(alpha):
+                    return ((xi - taylor.deriv(1)(alpha)) * np.sign(alpha) >= 0
+                                    and (
+                                        taylor.deriv(2)(alpha) * alpha
+                                        + p * (xi - taylor.deriv(1)(alpha))
+                                    )
+                                    * np.sign(alpha)
+                                    >= 0)
                 kwargs_span: dict[str, Any] = {"alpha": 0.16}
                 kwargs_line = {"color": "black", "linestyle": "dotted"}
                 if j == 0:

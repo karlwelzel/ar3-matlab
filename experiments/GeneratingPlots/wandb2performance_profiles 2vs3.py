@@ -10,7 +10,6 @@ groups = ["Exp_Benchmark_0", "Exp_Benchmark_3"]
 histories = cache_run_histories(groups)
 
 for tag_filter in ["training", "benchmark", "extra", "regularized-cubic"]:
-# for tag_filter in ["training"]:
     # Filter runs
     # api = wandb.Api(timeout=10000)
     api = wandb.Api()

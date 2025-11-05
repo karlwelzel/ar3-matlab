@@ -143,7 +143,9 @@ def merge_histories_from_files(groups: list[str]) -> dict[str, Any]:
     for group in groups:
         cache_file = pathlib.Path(f"{group}_cache.bin")
         if not cache_file.exists():
-            raise FileNotFoundError(f"Cache file for group '{group}' not found: {cache_file}")
+            raise FileNotFoundError(
+                f"Cache file for group '{group}' not found: {cache_file}"
+            )
         with open(cache_file, "rb") as f:
             group_histories = pickle.load(f)
             histories.update(group_histories)
@@ -184,7 +186,7 @@ def gpp_costs(
     for run in categorized_runs:
         if tolerance_measure == ToleranceMeasure.FUNCTION_VALUE:
             problem_f_best = f_best[run.problem]
-            problem_f_ini = f_ini[run.problem]
+            # problem_f_ini = f_ini[run.problem]
             (solution_indices,) = np.where(
                 run.history["f"]
                 <= problem_f_best + tolerance * max(1, abs(problem_f_best))
@@ -242,6 +244,7 @@ def set_plot_asthetics():
     plt.rc("ytick", labelsize="small")
     plt.rc("legend", fontsize="small")
     plt.rc("figure", titlesize="medium")
+
 
 def gpp_plot_title(
     cost_measure: str,

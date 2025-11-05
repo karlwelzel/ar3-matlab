@@ -74,18 +74,36 @@ for p in [2, 3]:
     if p == 2:
         custom_titles = [
             r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-9}$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^2$",
         ]
     else:
         custom_titles = [
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-9}$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^{-9}$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^3$",
         ]
 
     set_plot_asthetics()
@@ -96,7 +114,7 @@ for p in [2, 3]:
         col_order=categorized_runs.sorted_methods,
         col_titles=custom_titles,
     )
-    
+
     os.makedirs("theta", exist_ok=True)
     filename = f"theta/convergence {update_type} {p}.pgf"
     grid.figure.savefig(filename, dpi=100)

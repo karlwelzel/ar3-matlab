@@ -73,7 +73,7 @@ for p in [2, 3]:
                     "config.p": p,
                 },
             ],
-        }
+        },
     )
 
     # Categorize runs

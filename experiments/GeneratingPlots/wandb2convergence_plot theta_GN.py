@@ -26,7 +26,7 @@ for p in [2, 3]:
                 {"config.problem": "5"},
                 {"config.problem": "13"},
             ],
-        }
+        },
         # | ({"config.update_use_prerejection": True} if p == 3 else {}),
     )
 
@@ -77,9 +77,15 @@ for p in [2, 3]:
     if p == 2:
         legend_ncols = 2
         custom_titles = [
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
-            r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
+            r"\textsf{AR$2$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
         ]
 
         grid = convergence_dot_plot(
@@ -88,17 +94,29 @@ for p in [2, 3]:
             col_order=categorized_runs.sorted_methods,
             col_titles=custom_titles,
             legend_ncols=legend_ncols,
-            fig_scale = 1,
+            fig_scale=1,
         )
     else:
         legend_ncols = None  # default
         custom_titles = [
-            r"\textsf{AR$3$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp}" + "\n" + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
-            r"\textsf{AR$3$-Interp\textsuperscript{+}}" + "\n" + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            r"\textsf{AR$3$-Interp\textsuperscript{+}}"
+            + "\n"
+            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
         ]
 
         grid = convergence_dot_plot(
@@ -107,7 +125,7 @@ for p in [2, 3]:
             col_order=categorized_runs.sorted_methods,
             col_titles=custom_titles,
             legend_ncols=legend_ncols,
-            fig_scale = 0.85,
+            fig_scale=0.85,
         )
 
     os.makedirs("theta_GN", exist_ok=True)
