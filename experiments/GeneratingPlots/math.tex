@@ -1,0 +1,169 @@
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{latexsym}
+\usepackage{dsfont} % for \mathds{1} = indicator
+\usepackage{bm}  % provides \bm for bold math. Better than \boldsymbol
+\usepackage{mleftright} \mleftright{}  % improves spacing for \left and \right
+
+\newcommand{\df}{\mathop{}\!\mathrm{d}}
+\newcommand*{\indicfun}[1]{\mathds{1}_{\left\{#1\right\}}}
+
+\newcommand{\real}{\mathbb{R}}
+\newcommand{\comp}{\mathbb{C}}
+\newcommand{\herm}{\mathbb{H}}
+\newcommand{\reals}{\mathbb{R}}
+\newcommand{\symm}{\mathbb{S}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\real}
+
+\newcommand{\T}{\intercal}
+\renewcommand{\H}{*}
+
+\newcommand{\refgeq}[1]{\stackrel{\mathclap{\mathrm{\cref{#1}}}}{\geq}}
+\newcommand{\refleq}[1]{\stackrel{\mathclap{\mathrm{\cref{#1}}}}{\leq}}
+\newcommand{\refl}[1]{\stackrel{\mathclap{\mathrm{\cref{#1}}}}{<}}
+\newcommand{\refg}[1]{\stackrel{\mathclap{\mathrm{\cref{#1}}}}{>}}
+\newcommand{\refe}[1]{\stackrel{\mathclap{\mathrm{\cref{#1}}}}{=}}
+
+\newcommand{\defeq}{\triangleq}
+\newcommand{\defeqr}{=\mathrel{\mathop:}}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\Argmin}{Arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\Argmax}{Arg\,max}
+\newcommand{\st}{\text{s.t., }}
+
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\range}{range}
+\newcommand{\ball}[2]{{\mathcal{B}_{#1}} (#2)}
+
+\let\brack\undefined
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+\DeclarePairedDelimiter{\paren}{\lparen}{\rparen}
+\DeclarePairedDelimiter{\brack}{\lbrack}{\rbrack}
+\DeclarePairedDelimiter{\dotprod}{\langle}{\rangle}
+\DeclarePairedDelimiterXPP{\bigO}[1]{\mathcal{O}}{\lparen}{\rparen}{}{#1}
+\DeclarePairedDelimiterXPP{\bigOmega}[1]{\Omega}{\lparen}{\rparen}{}{#1}
+
+%scalar: serifs, non-bold, lowercase
+%vector: serifs, bold, lowercase
+\newcommand{\vek}[1]{\bm{#1}}
+%matrix: serifs, bold, uppercase
+\newcommand{\mat}[1]{\bm{#1}}
+%tensor: sans-serifs, bold, uppercase
+\newcommand{\tns}[1]{\textsf{\textbf{#1}}}
+%random variable: serifs, non-bold, uppercase
+\newcommand{\rv}[1]{#1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% General Math Macro A-Z %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%% A %%%%%%%%%%%%%%%%%
+\renewcommand{\AA}{\mathbf{A}}
+\renewcommand{\aa}{\mathbf{a}}
+
+%%%%%%%%%%%%%%%%% B %%%%%%%%%%%%%%%%%
+\newcommand{\BB}{\mathbf{B}}
+\newcommand{\bb}{\mathbf{b}}
+
+%%%%%%%%%%%%%%%%% C %%%%%%%%%%%%%%%%%
+\newcommand{\CC}{\mathbf{C}}
+\newcommand{\cc}{\mathbf{c}}
+
+%%%%%%%%%%%%%%%%% D %%%%%%%%%%%%%%%%%
+\newcommand{\DD}{\mathbf{D}}
+\newcommand{\dd}{\mathbf{d}}
+
+%%%%%%%%%%%%%%%%% E %%%%%%%%%%%%%%%%%
+\newcommand{\EE}{\mathbf{E}}
+\newcommand{\ee}{\mathbf{e}}
+
+%%%%%%%%%%%%%%%%% F %%%%%%%%%%%%%%%%%
+\newcommand{\FF}{\mathbf{F}}
+\newcommand{\ff}{\mathbf{f}}
+
+%%%%%%%%%%%%%%%%% G %%%%%%%%%%%%%%%%%
+\newcommand{\GG}{\mathbf{G}}
+\renewcommand{\gg}{\mathbf{g}}
+
+%%%%%%%%%%%%%%%%% H %%%%%%%%%%%%%%%%%
+\newcommand{\HH}{\mathbf{H}}
+\newcommand{\hh}{\mathbf{h}}
+
+%%%%%%%%%%%%%%%%% I %%%%%%%%%%%%%%%%%
+\newcommand{\eye}{\mathbf{I}}
+
+%%%%%%%%%%%%%%%%% J %%%%%%%%%%%%%%%%%
+\newcommand{\JJ}{\mathbf{J}}
+
+%%%%%%%%%%%%%%%%% K %%%%%%%%%%%%%%%%%
+\newcommand{\KK}{\mathbf{K}}
+
+%%%%%%%%%%%%%%%%% L %%%%%%%%%%%%%%%%%
+\newcommand{\LL}{\mathbf{L}}
+
+%%%%%%%%%%%%%%%%% M %%%%%%%%%%%%%%%%%
+\newcommand{\MM}{\mathbf{M}}
+
+%%%%%%%%%%%%%%%%% N %%%%%%%%%%%%%%%%%
+\newcommand{\NN}{\mathbf{N}}
+
+%%%%%%%%%%%%%%%%% O %%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%% P %%%%%%%%%%%%%%%%%
+\newcommand{\PP}{\mathbf{P}}
+\newcommand{\pp}{\mathbf{p}}
+
+%%%%%%%%%%%%%%%%% Q %%%%%%%%%%%%%%%%%
+\newcommand{\QQ}{\mathbf{Q}}
+\newcommand{\qq}{{\mathbf{q}}}
+
+%%%%%%%%%%%%%%%%% R %%%%%%%%%%%%%%%%%
+\newcommand{\RR}{\mathbf{R}}
+\newcommand{\rr}{\mathbf{r}}
+
+%%%%%%%%%%%%%%%%% S %%%%%%%%%%%%%%%%%
+\renewcommand{\SS}{\mathbf{S}}
+\renewcommand{\ss}{\mathbf{s}}
+
+%%%%%%%%%%%%%%%%% T %%%%%%%%%%%%%%%%%
+\newcommand{\TT}{\mathbf{T}}
+\newcommand{\ttt}{\mathbf{t}}
+
+%%%%%%%%%%%%%%%%% U %%%%%%%%%%%%%%%%%
+\newcommand{\UU}{\mathbf{U}}
+\newcommand{\uu}{\mathbf{u}}
+
+%%%%%%%%%%%%%%%%% V %%%%%%%%%%%%%%%%%
+\newcommand{\VV}{\mathbf{V}}
+\newcommand{\vv}{\mathbf{v}}
+
+%%%%%%%%%%%%%%%%% W %%%%%%%%%%%%%%%%%
+\newcommand{\WW}{\mathbf{W}}
+\newcommand{\ww}{\mathbf{w}}
+
+%%%%%%%%%%%%%%%%% X %%%%%%%%%%%%%%%%%
+\newcommand{\XX}{\mathbf{X}}
+\newcommand{\xx}{\mathbf{x}}
+
+%%%%%%%%%%%%%%%%% Y %%%%%%%%%%%%%%%%%
+\newcommand{\YY}{\mathbf{Y}}
+\newcommand{\yy}{\mathbf{y}}
+
+%%%%%%%%%%%%%%%%% Z %%%%%%%%%%%%%%%%%
+\newcommand{\ZZ}{\mat{Z}}
+\newcommand{\zz}{\mathbf{z}}
+
+%%%%%%%%%%%%%%% delta %%%%%%%%%%%%%%%
+\newcommand{\deltapred}{\delta^{\operatorname{pred}}}
+\newcommand{\deltaact}{\delta^{\operatorname{act}}}
+
+%%%%%%%%%%%%%% epsilon %%%%%%%%%%%%%%
+\newcommand{\eps}{\varepsilon}
