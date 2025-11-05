@@ -444,7 +444,7 @@ def generate_gpp_plots(
     figure, axs = plt.subplots(
         nrows=1,
         ncols=len(cost_measures),
-        figsize=(2.8 * len(cost_measures), 2.5 + legend_height),
+        figsize=(2.5 * len(cost_measures), 2.5 + legend_height),
         squeeze=False,
     )
 
