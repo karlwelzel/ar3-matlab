@@ -419,7 +419,7 @@ def consolidate_legends(
         legend.remove()
 
     # Adjust layout to accommodate the new legend
-    figure.tight_layout(pad=0.5, rect=(0, 0, 1, 1 - height_ratio))
+    figure.tight_layout(pad=1, rect=(0, 0, 1, 1 - height_ratio))
 
 
 def generate_gpp_plots(
@@ -472,9 +472,9 @@ def generate_gpp_plots(
         {
             "font.size": 6,
             "lines.linewidth": 0.75,
-            "axes.linewidth": 0.75,
-            "xtick.major.width": 0.75,
-            "ytick.major.width": 0.75,
+            "axes.linewidth": 0.5,
+            "xtick.major.width": 0.5,
+            "ytick.major.width": 0.5,
         }
     ):
         legend_rows = np.ceil(len(new_labels) / legend_ncols)
@@ -485,12 +485,13 @@ def generate_gpp_plots(
             figure, axs = plt.subplots(
                 nrows=num_tolerances,
                 ncols=len(cost_measures),
-                figsize=(2 * len(cost_measures), 1.7 * num_tolerances + legend_height),
+                figsize=(1.5 * len(cost_measures), 1.3 * num_tolerances + legend_height),
                 squeeze=False,
             )
 
             for i, cost_measure in enumerate(cost_measures):
                 for j, tolerance in enumerate(tolerances[tolerance_measure]):
+                    axs[j][i].tick_params(axis="y", pad=-1)
                     gpp_tau_plot(
                         ax=axs[j][i],
                         categorized_runs=categorized_runs,
@@ -519,11 +520,13 @@ def generate_gpp_plots(
             figure, axs = plt.subplots(
                 nrows=len(taus),
                 ncols=len(cost_measures),
-                figsize=(2 * len(cost_measures), 1.7 * len(taus) + legend_height),
+                figsize=(1.5 * len(cost_measures), 1.3 * len(taus) + legend_height),
+                squeeze=False,
             )
 
             for i, cost_measure in enumerate(cost_measures):
                 for j, tau in enumerate(taus):
+                    axs[j][i].tick_params(axis="y", pad=-1)
                     gpp_eps_plot(
                         ax=axs[j][i],
                         categorized_runs=categorized_runs,
@@ -658,7 +661,7 @@ def convergence_dot_plot(
     if legend_loc == "top":
         legend_height = 0.4 * (len(Evals) / (legend_ncols or len(Evals)))  # inches
         grid.figure.set_size_inches(
-            len(grid.col_names) * 1.7 * fig_scale,
+            len(grid.col_names) * 1.5 * fig_scale,
             len(grid.row_names) * 1.7 * fig_scale + legend_height,
         )
         height_ratio = legend_height / grid.figure.get_figheight()
