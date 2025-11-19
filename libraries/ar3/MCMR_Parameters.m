@@ -38,10 +38,11 @@ classdef MCMR_Parameters < Optimization_Parameters
     methods
 
         function [status, best_x, iteration] = run(obj, ~, c, mat, sigma, r)
+            % return error if mat is function handle TODO
             residual = @(x) c + mat * x;
             n = length(c);
             identity = eye(n, n);
-            norm_mat = norm(mat);
+            norm_mat = norm(mat, "fro");
             iteration = 0;
 
             lambda_max = inf;
@@ -63,7 +64,12 @@ classdef MCMR_Parameters < Optimization_Parameters
 
             if indefinite
                 try
-                    lambda_min = max(-eigs(mat_lambda, 1, 'smallestreal'), 0) + eps;
+                    if n >= 100
+                        min_eigval = eigs(mat_lambda, 1, 'smallestreal');
+                    else
+                        min_eigval = min(eig(mat_lambda));
+                    end
+                    lambda_min = max(-min_eigval, 0) + eps;
                 catch
                     status = Optimization_Status.ILL_CONDITIONED;
                     best_x = zeros(n, 1);
