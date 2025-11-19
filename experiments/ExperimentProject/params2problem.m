@@ -45,10 +45,20 @@ function [x0, f_handle] = params2problem(problem)
             elseif isfield(objective, "dim")
                 [~, ~, ~, x0, f_handle] = mgh_function(objective.name, objective.dim);
             end
+        elseif objective.name == "chebysv_rosenbrock_matfree"
+            f_handle = @(x) chebysv_rosenbrock_matfree(x);
+            x0 = ones(objective.dim, 1);
+            x0(1) = -1;
         elseif objective.name == "chebysv_rosenbrock"
             f_handle = @(x) chebysv_rosenbrock(x);
             x0 = ones(objective.dim, 1);
             x0(1) = -1;
+        elseif objective.name == "nonlinear_least_squares_matfree"
+            mat = rand(n, n);
+            b = zeros(n, 1);
+            b(1:floor(n / 2)) = 1;
+            f_handle = @(x) nonlinear_least_squares_matfree(mat, b, x);
+            x0 = zeros(objective.dim, 1);
         elseif objective.name == "nonlinear_least_squares"
             mat = rand(n, n);
             b = zeros(n, 1);
@@ -57,7 +67,20 @@ function [x0, f_handle] = params2problem(problem)
             x0 = zeros(objective.dim, 1);
         elseif startsWith(objective.name, "ill_cond")
             x0 = ones(objective.dim, 1); % T not well-defined at 0
-            if objective.name == "ill_cond_bm"
+            if objective.name == "ill_cond_bm_matfree"
+                rng(0);
+                f_handle = construct_regularized_cubic_matfree(n, 0, 0);
+            elseif objective.name == "ill_cond_H_matfree"
+                rng(1);
+                f_handle = construct_regularized_cubic_matfree(n, 6, 0);
+            elseif objective.name == "ill_cond_T_matfree"
+                rng(2);
+                f_handle = construct_regularized_cubic_matfree(n, 0, 6);
+            elseif objective.name == "ill_cond_HT_matfree"
+                rng(3);
+                f_handle = construct_regularized_cubic_matfree(n, 6, 6);
+            elseif objective.name == "ill_cond_bm"
+                rng(0);
                 f_handle = construct_regularized_cubic(n, 0, 0);
             elseif objective.name == "ill_cond_H"
                 rng(1);
