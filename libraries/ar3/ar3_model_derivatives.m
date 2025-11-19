@@ -12,12 +12,11 @@ function [m, der1m, der2m] = ar3_model_derivatives(s, f, der1f, der2f, der3f, si
         der1f (:, 1) double
         % The gradient at 0
 
-        der2f (:, :) double
-        % The Hessian at 0
+        der2f
+        % The Hessian at 0 (matrix or function handle)
 
-        % der3f (:, :, :) double
         der3f
-        % The third derivative at 0
+        % The third derivative at 0 (tensor or function handle)
 
         sigma (1, 1) double {mustBeNonnegative}
         % The regularization parameter
@@ -30,25 +29,35 @@ function [m, der1m, der2m] = ar3_model_derivatives(s, f, der1f, der2f, der3f, si
         der1m (:, 1) double
         % The gradient of the model at s
 
-        der2m (:, :) double
-        % The Hessian of the model at s
+        der2m
+        % The Hessian of the model at s (matrix or function handle)
     end
 
     n = length(s);
+    norm_s = norm(s);
 
-    if isa(der3f, 'function_handle')
-        der3f_s = der3f(s);
-    else
-        der3f_s = tensorprod(der3f, s, 1);
-    end
+    % Handle derivative vec multiplications
+    der3f_s = tensor_vec(der3f, s);
+    Hs = mat_vec(der2f, s);
+    der3f_s_s = mat_vec(der3f_s, s);
 
-    m = f + der1f' * s + (1 / 2) * s' * der2f * s + (1 / 6) * s' * der3f_s * s + 1 / 4 * sigma * norm(s)^4;
+    % Model value
+    m = f + der1f' * s + (1 / 2) * (s' * Hs) + ...
+        (1 / 6) * s' * der3f_s_s + (1 / 4) * sigma * norm_s^4;
 
+    % Gradient
     if nargout > 1
-        der1m = der1f + der2f * s + (1 / 2) * der3f_s * s + sigma * (norm(s)^2 * s);
+        der1m = der1f + Hs + (1 / 2) * der3f_s_s + sigma * (norm_s^2 * s);
     end
 
+    % Hessian or Hessian-vector product
     if nargout > 2
-        der2m = der2f + der3f_s + sigma * (norm(s)^2 * eye(n) + 2 * (s * s'));
+        if isa(der2f, 'function_handle')
+            % Return a Hessian-vector product handle
+            der2m = @(v) der2f(v) + der3f_s(v) + sigma * (norm_s^2 * v + 2 * (s' * v) * s);
+        else
+            % Return the explicit Hessian matrix
+            der2m = der2f + der3f_s + sigma * (norm_s^2 * eye(n) + 2 * (s * s'));
+        end
     end
 end

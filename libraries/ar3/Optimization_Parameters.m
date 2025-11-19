@@ -21,6 +21,8 @@ classdef (Abstract) Optimization_Parameters < Parameters
                 obj.p = 3;
             elseif solver == "MCMR"
                 obj = MCMR_Parameters.from_struct(params);
+            elseif solver == "GLRT"
+                obj = GLRT_Parameters.from_struct(params);
             elseif solver == "QQR"
                 obj = QQR_Parameters.from_struct(params);
             elseif startsWith(solver, "fminunc_")

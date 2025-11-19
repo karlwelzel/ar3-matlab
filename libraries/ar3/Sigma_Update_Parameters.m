@@ -37,9 +37,15 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
         end
 
         function [taylor_poly, model_poly] = construct_polynomials(run, sigma)
-            if run.parameters.p == 2
+            if run.parameters.p == 1
                 taylor_poly = [
-                               (1 / 2) * run.step' * run.H * run.step
+                               run.g' * run.step
+                               run.f
+                              ]';
+                model_poly = [(sigma / 2) * run.norm_step^2, taylor_poly];
+            elseif run.parameters.p == 2
+                taylor_poly = [
+                               (1 / 2) * run.step' * mat_vec(run.H, run.step)
                                run.g' * run.step
                                run.f
                               ]';
@@ -47,14 +53,10 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                 % Note that the AR2 model only coincides with this polynomial
                 % for nonnegative alpha
             elseif run.parameters.p == 3
-                if isa(run.T, 'function_handle')
-                    T_s = run.T(run.step);
-                else
-                    T_s = tensorprod(run.T, run.step, 1);
-                end
+                T_s = tensor_vec(run.T, run.step);
                 taylor_poly = [
-                               (1 / 6) * run.step' * T_s * run.step
-                               (1 / 2) * run.step' * run.H * run.step
+                               (1 / 6) * run.step' * mat_vec(T_s, run.step)
+                               (1 / 2) * run.step' * mat_vec(run.H, run.step)
                                run.g' * run.step
                                run.f
                               ]';
@@ -73,7 +75,9 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                 s = sigma;
             end
 
-            if run.parameters.p == 2
+            if run.parameters.p == 1
+                decr = -ar1_model_derivatives(run.step, 0, run.g, s);
+            elseif run.parameters.p == 2
                 decr = -ar2_model_derivatives(run.step, 0, run.g, run.H, s);
             elseif run.parameters.p == 3
                 decr = -ar3_model_derivatives(run.step, 0, run.g, run.H, run.T, s);
@@ -100,7 +104,10 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                 dim = length(run.x);
                 p = run.parameters.p;
 
-                if p == 2
+                if p == 1
+                    [f, der1f] = run.f_handle(run.x);
+                    T0 = der1f;
+                elseif p == 2
                     [f, der1f, der2f] = run.f_handle(run.x);
                     T0 = der2f;
                 elseif p == 3
@@ -114,7 +121,9 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                         delta_x = randn(dim, 1);
                         % norm(delta_x) ~ sqrt(eps) is optimal for finite differences
                         delta_x = delta_x * sqrt(eps);
-                        if p == 2
+                        if p == 1
+                            [~, T] = run.f_handle(run.x + delta_x);
+                        elseif p == 2
                             [~, ~, T] = run.f_handle(run.x + delta_x);
                         elseif p == 3
                             [~, ~, ~, T] = run.f_handle(run.x + delta_x);
@@ -128,14 +137,10 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                     delta_x = -der1f;
                     for i = 1:steps
                         norm_x = norm(delta_x);
-                        if isa(der3f, 'function_handle')
-                            der3f_s = der3f(delta_x);
-                        else
-                            der3f_s = tensorprod(der3f, delta_x, 1);
-                        end
+                        der3f_s = tensor_vec(der3f, delta_x);
                         taylor_der_poly = [
-                                           delta_x' * der3f_s * delta_x / 2
-                                           delta_x' * der2f * delta_x
+                                           delta_x' * mat_vec(der3f_s, delta_x) / 2
+                                           delta_x' * mat_vec(der2f, delta_x)
                                            der1f' * delta_x
                                           ]';
                         sigma_invex = compute_sigma_invex(taylor_der_poly, norm_x);
@@ -155,14 +160,13 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                             continue
                         end
 
-                        taylor_residual = f_plus - f - der1f' * delta_x - (1 / 2) * delta_x' * der2f * delta_x;
+                        taylor_residual = f_plus - f - der1f' * delta_x;
+                        if p >= 2
+                            taylor_residual = taylor_residual - (1 / 2) * delta_x' * mat_vec(der2f, delta_x);
+                        end
                         if p == 3
-                            if isa(der3f, 'function_handle')
-                                der3f_s = der3f(delta_x);
-                            else
-                                der3f_s = tensorprod(der3f, delta_x, 1);
-                            end
-                            taylor_residual = taylor_residual - (1 / 6) * delta_x' * der3f_s * delta_x;
+                            der3f_s = tensor_vec(der3f, delta_x);
+                            taylor_residual = taylor_residual - (1 / 6) * delta_x' * mat_vec(der3f_s, delta_x);
                         end
                         sigma0 = max((p + 1) * abs(taylor_residual) / norm(delta_x)^(p + 1), sigma0);
                     end

@@ -8,9 +8,8 @@ classdef ARP_Run < Optimization_Run
     properties
         f (1, 1) double = nan
         g (:, 1) double = nan
-        H (:, :) double = nan % mh:ignore_style
-        % T (:, :, :) double = nan
-        T = nan % mh:ignore_style
+        H = nan
+        T = nan
         step (:, 1) double = nan
         norm_step (1, 1) double = nan
         norm_g (1, 1) double = nan
@@ -87,7 +86,9 @@ classdef ARP_Run < Optimization_Run
                 obj.x = obj.x + obj.step;
 
                 % Update derivatives
-                if order == 2
+                if order == 1
+                    [obj.f, obj.g] = obj.f_handle(obj.x);
+                elseif order == 2
                     [obj.f, obj.g, obj.H] = obj.f_handle(obj.x);
                 elseif order == 3
                     [obj.f, obj.g, obj.H, obj.T] = obj.f_handle(obj.x);
@@ -115,14 +116,21 @@ classdef ARP_Run < Optimization_Run
             subproblem_parameters = obj.parameters.subproblem_parameters;
             subproblem_parameters.termination_rule.outer_run = obj;
 
-            if obj.parameters.p == 2
-                model_handle = @(s) ar2_model_derivatives(s, 0, obj.g, obj.H, sigma);
-                if class(subproblem_parameters) == "MCMR_Parameters"
+            if obj.parameters.p == 1
+                obj.step = -obj.g / sigma;
+            elseif obj.parameters.p == 2
+                if class(subproblem_parameters) == "MCMR_Parameters" % requires full matrix H
                     [obj.subproblem_status, obj.step, num_iterations] = ...
                         subproblem_parameters.run(obj.f, obj.g, obj.H, sigma, 3);
                     obj.total_model_evals = obj.total_model_evals + num_iterations;
                     obj.total_model_derivative_evals = obj.total_model_derivative_evals + num_iterations;
+                elseif class(subproblem_parameters) == "GLRT_Parameters"
+                    [obj.subproblem_status, obj.step, num_iterations] = ...
+                        subproblem_parameters.run(obj.f, obj.g, obj.H, sigma);
+                    obj.total_model_evals = obj.total_model_evals + num_iterations;
+                    obj.total_model_derivative_evals = obj.total_model_derivative_evals + num_iterations;
                 elseif class(subproblem_parameters) == "Fminunc_Parameters"
+                    model_handle = @(s) ar2_model_derivatives(s, 0, obj.g, obj.H, sigma);
                     [obj.subproblem_status, obj.step, sub_history] = ...
                         subproblem_parameters.run(model_handle, zeros(length(obj.x), 1));
                     obj.total_model_evals = obj.total_model_evals + sub_history(end).total_fun;
