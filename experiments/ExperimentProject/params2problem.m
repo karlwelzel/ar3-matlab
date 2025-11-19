@@ -45,6 +45,14 @@ function [x0, f_handle] = params2problem(problem)
             elseif isfield(objective, "dim")
                 [~, ~, ~, x0, f_handle] = mgh_function(objective.name, objective.dim);
             end
+        elseif objective.name == "rosenbrock_matfree"
+            f_handle = @(x) chebysv_rosenbrock_matfree(x);
+            x0 = ones(objective.dim, 1);
+            x0(1) = -1;
+        elseif objective.name == "rosenbrock"
+            f_handle = @(x) chebysv_rosenbrock(x);
+            x0 = ones(objective.dim, 1);
+            x0(1) = -1;
         elseif objective.name == "chebysv_rosenbrock_matfree"
             f_handle = @(x) chebysv_rosenbrock_matfree(x);
             x0 = ones(objective.dim, 1);

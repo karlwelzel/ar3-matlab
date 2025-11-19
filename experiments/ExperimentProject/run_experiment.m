@@ -11,7 +11,7 @@ format short g;
 
 % AR2 or AR3
 p = {
-     2
+     3
      % 2
      % 3
     };
@@ -24,8 +24,8 @@ update_sigma0 = {
 
 % Different test problems
 problems = {
-            6 % MGH test, 1 to 35
-            % 'chebysv_rosenbrock_matfree' % Multidimensional Rosenbrock
+            % 3 % MGH test, 1 to 35
+            'rosenbrock' % Multidimensional Rosenbrock
             % 'nonlinear_least_squares'
             % 'ill_cond_bm' % Well-conditioned Regularized 3rd-order polynomials
             % 'ill_cond_H' % Ill-conditioned Hessian ...
@@ -40,7 +40,7 @@ else
     if strcmp(problems{1}, "d1_fun")
         problem = jsonencode(struct(name = problems{1}, dim = 1));
     else
-        problem = jsonencode(struct(name = problems{1}, dim = 1000));
+        problem = jsonencode(struct(name = problems{1}, dim = 1000000));
     end
 end
 
@@ -54,8 +54,8 @@ x0_type = {
 
 % Three update options for the main algorithm
 update_type = {
-               'Simple'
-               % 'Interpolation_m'
+               % 'Simple'
+               'Interpolation_m'
                % 'BGMS'
               };
 
@@ -187,7 +187,8 @@ else
     end
 
     % Only these 6 problems have *_matfree variants
-    base_candidates = ["chebysv_rosenbrock", ...
+    base_candidates = ["rosenbrock", ...
+                       "chebysv_rosenbrock", ...
                        "nonlinear_least_squares", ...
                        "ill_cond_bm", ...
                        "ill_cond_H", ...
