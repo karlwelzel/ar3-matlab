@@ -8,7 +8,7 @@ classdef ARP_Parameters < Optimization_Parameters
     % whose subproblem_parameters attribute is also an ARP_Parameters object.
 
     properties
-        p (1, 1) double {mustBeInteger, mustBeGreaterThan(p, 1), mustBeLessThan(p, 4)} = 2
+        p (1, 1) double {mustBeInteger, mustBeGreaterThan(p, 0), mustBeLessThan(p, 4)} = 2
         sigma_update_parameters (1, 1) Sigma_Update_Parameters = Simple_Update_Parameters
         subproblem_parameters (1, 1) Optimization_Parameters = MCMR_Parameters
         termination_rule (1, 1) Termination_Rule = First_Order_Termination_Rule
