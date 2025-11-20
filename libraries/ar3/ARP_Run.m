@@ -19,6 +19,8 @@ classdef ARP_Run < Optimization_Run
         total_derivative_evals (1, 1) double {mustBeInteger, mustBeNonnegative} = 0
         total_model_evals (1, 1) double {mustBeInteger, mustBeNonnegative} = 0
         total_model_derivative_evals (1, 1) double {mustBeInteger, mustBeNonnegative} = 0
+        total_chol (1, 1) double {mustBeInteger, mustBeInteger} = 0
+        total_hvp (1, 1) double {mustBeInteger, mustBeInteger} = 0
         status (1, 1) Optimization_Status = Optimization_Status.RUNNING
         subproblem_status (1, 1) Optimization_Status = Optimization_Status.RUNNING
     end
@@ -39,6 +41,8 @@ classdef ARP_Run < Optimization_Run
                                              total_solves = nan, ...
                                              total_model = nan, ...
                                              total_model_der = nan, ...
+                                             total_chol = nan, ...
+                                             total_hvp = nan, ...
                                              time = nan, ...
                                              sigma = nan, ...
                                              decrease_ratio = nan, ...
@@ -108,6 +112,8 @@ classdef ARP_Run < Optimization_Run
             obj.current_history_row.total_solves = obj.iteration - 1;
             obj.current_history_row.total_model = obj.total_model_evals;
             obj.current_history_row.total_model_der = obj.total_model_derivative_evals;
+            obj.current_history_row.total_chol = obj.total_chol;
+            obj.current_history_row.total_hvp = obj.total_hvp;
             obj.current_history_row.time = toc(obj.start_time);
         end
 
@@ -124,17 +130,23 @@ classdef ARP_Run < Optimization_Run
                         subproblem_parameters.run(obj.f, obj.g, obj.H, sigma, 3);
                     obj.total_model_evals = obj.total_model_evals + num_iterations;
                     obj.total_model_derivative_evals = obj.total_model_derivative_evals + num_iterations;
+                    obj.total_chol = obj.total_chol + num_iterations;
+                    obj.total_hvp = 0;
                 elseif class(subproblem_parameters) == "GLRT_Parameters"
                     [obj.subproblem_status, obj.step, num_iterations] = ...
                         subproblem_parameters.run(obj.f, obj.g, obj.H, sigma);
                     obj.total_model_evals = obj.total_model_evals + num_iterations;
                     obj.total_model_derivative_evals = obj.total_model_derivative_evals + num_iterations;
+                    obj.total_chol = 0;
+                    obj.total_hvp = obj.total_hvp + num_iterations;
                 elseif class(subproblem_parameters) == "Fminunc_Parameters"
                     model_handle = @(s) ar2_model_derivatives(s, 0, obj.g, obj.H, sigma);
                     [obj.subproblem_status, obj.step, sub_history] = ...
                         subproblem_parameters.run(model_handle, zeros(length(obj.x), 1));
                     obj.total_model_evals = obj.total_model_evals + sub_history(end).total_fun;
                     obj.total_model_derivative_evals = obj.total_model_derivative_evals + sub_history(end).total_der;
+                    obj.total_chol = 0;
+                    obj.total_hvp = 0;
                 else
                     error("Invalid subproblem solver: " + class(obj.parameters.subproblem_parameters));
                 end
@@ -159,6 +171,16 @@ classdef ARP_Run < Optimization_Run
 
                 obj.total_model_evals = obj.total_model_evals + sub_history(end).total_fun;
                 obj.total_model_derivative_evals = obj.total_model_derivative_evals + sub_history(end).total_der;
+                if isa(obj.H, "function_handle") && isfield(sub_history, "total_hvp")
+                    obj.total_hvp = obj.total_hvp + sub_history(end).total_fun + sub_history(end).total_hvp;
+                else
+                    obj.total_hvp = 0;
+                end
+                if ~isa(obj.H, "function_handle") && isfield(sub_history, "total_chol")
+                    obj.total_chol = obj.total_chol + sub_history(end).total_chol;
+                else
+                    obj.total_chol = 0;
+                end
             end
 
             obj.norm_step = norm(obj.step);
