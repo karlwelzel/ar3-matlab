@@ -130,7 +130,7 @@ for p in [2, 3]:
         new_labels = [
             r"\textsf{AR$2$-BGMS}" + "\n" + first_order_tc,
             r"\textsf{AR$2$-Interp}" + "\n" + first_order_tc,
-            r"\textsf{AR$3$-Simple}" + "\n" + first_order_tc,
+            r"\textsf{AR$2$-Simple}" + "\n" + first_order_tc,
             r"\textsf{AR$2$-BGMS}" + "\n" + theta_tc.format(exp=2),
             r"\textsf{AR$2$-Interp}" + "\n" + theta_tc.format(exp=2),
             r"\textsf{AR$2$-Simple}" + "\n" + theta_tc.format(exp=2),
