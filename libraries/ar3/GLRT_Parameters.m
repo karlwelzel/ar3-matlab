@@ -8,30 +8,21 @@ classdef GLRT_Parameters < Optimization_Parameters
     %         raise a safe lower bound lambda_lower and retry.
     %   When SPD: solve (T + lambda*I) y = beta1*e1, form w via L u = y, w = u./sqrt(d).
     %   Define phi(lambda) = sigma*norm(y) - lambda.
-    %       If phi > 0 (lambda too small, in L): take ONE safeguarded Newton step
-    %         and clip inside [lambda_lower, lambda_upper].
-    %       If phi < 0 (in G): take a bracket step only (no Newton).
-    %   Lambda is kept nondecreasing and clipped strictly inside the current bracket.
+    %       Use safeguarded Newton steps inside the current bracket
+    %       [lambda_lower, lambda_upper], with fallback bracket steps.
+    %   Lambda is kept inside the current bracket (no forced monotonicity).
     %
     % Notes:
     %   No "hard case" augmentation here.
-    %
-    % Public knobs (kept minimal to match your version):
-    %   update_strike : how many lambda raises before we escalate by doubling
 
     properties
         termination_rule (1, 1) Termination_Rule = Cartis_G_Termination_Rule
-        update_strike   (1, 1) double {mustBeInteger, mustBePositive} = 10
     end
 
     methods (Static)
 
         function obj = from_struct(params)
             obj = GLRT_Parameters;
-            if isfield(params, "update_strike")
-                obj.update_strike = params.update_strike;
-                params = rmfield(params, "update_strike");
-            end
             if isfield(params, "stop_rule")
                 [termination_params, params] = extract_params(params, "stop_");
                 obj.termination_rule = Termination_Rule.from_struct(termination_params);
@@ -46,7 +37,7 @@ classdef GLRT_Parameters < Optimization_Parameters
 
     methods
 
-        function [status, best_x, iterations, sigma] = run(obj, ~, g, H, sigma)
+        function [status, best_x, t, sigma] = run(obj, ~, g, H, sigma)
             arguments
                 obj
                 ~
@@ -60,107 +51,127 @@ classdef GLRT_Parameters < Optimization_Parameters
             % Right-hand side and its norm
             b = -g;
             beta1 = norm(b);
-            if beta1 == 0
-                status = Optimization_Status.SUCCESS;
-                best_x = zeros(n, 1);
-                iterations = 0;
-                return
-            end
+            betan = beta1;
+            t = 0;
 
             % Lanczos process
             v_prev    = zeros(n, 1);
             beta_prev = beta1;
-            v         = b / beta1;     % first Lanczos vector
-            V         = v;             % reorthogonalized basis we build
+            v         = b / beta1;      % first Lanczos vector
+            V         = v;              % reorthogonalized basis we build
             alpha_diag = [];
             beta_diag  = [];
-
-            iterations = 0;
 
             % Bracket and controls for lambda (CGT-GLRT 9.2.1 style)
             lam_lower     = 0.0;
             lam_upper     = Inf;
-            clip_margin   = 1e-10;   % tiny interior margin when clipping in [L,U]
-            max_escalate  = 30;      % cap doubling attempts if NPC persists
-            theta         = 0.5;     % linear split parameter (0<theta<1)
+            clip_margin   = 1e-10;    % tiny interior margin when clipping in [L,U]
+            max_escalate  = 30;       % cap doubling attempts if NPC persists
+            theta         = 0.5;      % linear split parameter (0<theta<1)
+            max_lifting   = 2;
+
+            % Lambda-region status:
+            % 'N' (indefinite), 'L' (less), 'G' (greater), 'E' (Escape)
+            lambda_status = 'N';
+
+            norm_g       = Inf;
+            best_y       = zeros(1, 1);
+            tol_lanczos = eps * n * max(1, beta1);
 
             while true
-                % Lanczos step (before reorth)
-                [v_next, alfa, betan_raw] = GLRT_Parameters.lanczos(H, v, v_prev, beta_prev);
-                iterations = iterations + 1; % Mat-vec multiplications
+                % Lanczos step: only while Krylov subspace dimension <= n
+                % (you can tighten this if you want: e.g., t < n && betan ~= 0)
+                if t < n && betan ~= 0
+                    % Lanczos step (before reorth)
+                    [v_next, alfa, betan_raw] = GLRT_Parameters.lanczos(H, v, v_prev, beta_prev);
+                    t = t + 1; % mat-vec multiplications
 
-                % Full reorthogonalization of v_next and normalization
-                if iterations == 1
-                    v_next = v_next - (v' * v_next) * v;
-                    % Initialize lambda (classic cubic heuristic)
-                    lamda = (sqrt(alfa^2 + 4 * beta1 * sigma) - alfa) / 2;
-                    lamda = max(lamda, lam_lower);
-                else
-                    v_next = v_next - V * (V' * v_next);
+                    % Full reorthogonalization of v_next and normalization
+                    if t == 1
+                        v_next = v_next - (v' * v_next) * v;
+                        % Initialize lambda (exact scalar 1D solution)
+                        lamda = (sqrt(alfa^2 + 4 * beta1 * sigma) - alfa) / 2;
+                        lamda = max(lamda, lam_lower);
+                    else
+                        v_next = v_next - V * (V' * v_next);
+                    end
+
+                    betan = norm(v_next);
+                    if betan > tol_lanczos
+                        v_next = v_next / betan;
+                    else
+                        % Subspace breakdown, stop expanding
+                        betan  = 0;
+                        v_next = zeros(n, 1);
+                    end
+
+                    % Grow basis and tridiagonal data
+                    V           = [V, v_next];
+                    alpha_diag = [alpha_diag; alfa];
+                    beta_diag  = [beta_diag;  betan];
+
+                    % Advance Lanczos state
+                    v_prev    = v;
+                    v         = v_next;
+                    beta_prev = betan;
+
+                    % New T (larger Krylov subspace): reset lambda-iteration counter
+                    lambda_iters = 0;
                 end
 
-                betan = norm(v_next);
-                if betan > eps
-                    v_next = v_next / betan;
-                else
-                    % Subspace breakdown: stop expanding
-                    betan  = 0;
-                    v_next = zeros(n, 1);
-                end
+                lamda_lifting = 0;
+                lambda_status = 'N';
 
-                % Grow basis and tridiagonal data
-                V          = [V, v_next];
-                alpha_diag = [alpha_diag; alfa];
-                beta_diag  = [beta_diag;  betan];
-
-                % Advance Lanczos state
-                v_prev   = v;
-                v        = v_next;
-                beta_prev = betan;
-
-                % Try LDL at current t; if NPC, raise lam_lower and retry (bounded by update_strike)
-                t        = numel(alpha_diag);
-                strikes  = 0;
-
-                while true
+                while lambda_status ~= 'E' % E for escape
+                    % Try LDL at current t
                     [has_nc, l, d, lam_min_saf] = ...
                         GLRT_Parameters.ldl_tridiag(alpha_diag, beta_diag(1:end - 1), lamda);
 
                     if has_nc
-                        % lambda is in the indefinite region N: lift the lower bound and retry
+                        % if NPC, raise lam_lower and retry
+                        lambda_status = 'N';
                         lam_lower = max(lam_lower, lam_min_saf);
-                        lamda     = max(lamda, lam_lower);
-                        strikes   = strikes + 1;
 
-                        if strikes >= obj.update_strike
-                            % racket-aware escalation: double until SPD,
+                        % Change 1: Reset lam_upper if lower bound contradicts it
+                        % If the safe lower bound from LDL exceeds our current upper bound,
+                        % the upper bound was likely invalid or we are in a noisy region.
+                        if isfinite(lam_upper) && lam_lower >= lam_upper
+                            lam_upper = Inf;
+                        end
+
+                        lamda     = max(lamda, lam_lower);
+                        lamda_lifting    = lamda_lifting + 1;
+
+                        if lamda_lifting >= max_lifting % try lifted lambda twice, doubling if fails
+                            % bracket-aware escalation: double until SPD,
                             % but stay inside (lam_lower, lam_upper) if finite
                             success = false;
-                            lam_try = max(lamda, max(1.0, lam_lower));
+                            lam_try = max(lamda, max(1e-4, lam_lower));
                             for k = 1:max_escalate
                                 if isfinite(lam_upper)
                                     % keep strictly inside the bracket
                                     left  = lam_lower + clip_margin * max(1, lam_upper - lam_lower);
                                     right = lam_upper - clip_margin * max(1, lam_upper - lam_lower);
 
-                                    % propose a monotone lift; cap by right edge
-                                    lam_try = min(max(2.0 * lam_try, left), right);
+                                    % propose a doubling lift; cap by right edge
+                                    lam_try = min(max(2 * lam_try, left), right);
 
                                     % if no increase possible after capping, fall back to bracket step
-                                    if lam_try <= lamda + eps
+                                    if lam_try < lamda + eps
                                         lam_geom = sqrt(lam_lower * lam_upper);
                                         lam_lin  = lam_lower + theta * (lam_upper - lam_lower);
                                         lam_try  = max(lam_geom, lam_lin);  % strictly inside by construction
                                     end
                                 else
                                     % no finite upper bound yet, pure doubling is fine
-                                    lam_try = max(2.0 * lam_try, lam_lower * (2.0^k));
+                                    lam_try = max(2 * lam_try, lam_lower * (2.0^k));
                                 end
 
                                 [has_nc2, l2, d2, lam_min2] = ...
                                     GLRT_Parameters.ldl_tridiag(alpha_diag, beta_diag(1:end - 1), lam_try);
 
                                 if ~has_nc2
+                                    % T + lambda I is PSD, lambda in L or G
                                     l = l2;
                                     d = d2;
                                     lamda = lam_try;
@@ -168,12 +179,18 @@ classdef GLRT_Parameters < Optimization_Parameters
                                     break
                                 else
                                     lam_lower = max(lam_lower, lam_min2);
-                                    lam_try   = max(lam_try, lam_lower); % next trial respects lifted lower bound
+                                    % Ensure we don't break the upper bound during escalation
+                                    if isfinite(lam_upper) && lam_lower >= lam_upper
+                                        lam_upper = Inf;
+                                    end
+                                    lam_try   = max(lam_try, lam_lower);
                                 end
                             end
+
                             if ~success
-                                status  = Optimization_Status.NUMERICAL_ISSUES;
-                                best_x = V(:, 1:t - 1) * y;
+                                status = Optimization_Status.NUMERICAL_ISSUES;
+                                % fall back to current y in this subspace
+                                best_x = V(:, 1:numel(best_y)) * best_y;
                                 return
                             end
                             % Found SPD via escalation, continue to SPD path below with l,d,lamda
@@ -182,8 +199,11 @@ classdef GLRT_Parameters < Optimization_Parameters
                             continue
                         end
                     end
+                    % Escaped with PSD T.
 
+                    % -----------------------------------------------------------------
                     % SPD at current lambda: solve (T+lambda*I) y = beta1 e1, and build w
+                    % -----------------------------------------------------------------
                     % Forward: L q = beta1 e1
                     q      = zeros(t, 1);
                     q(1) = beta1;
@@ -199,90 +219,142 @@ classdef GLRT_Parameters < Optimization_Parameters
                         y(i) = z(i) - l(i) * y(i + 1);
                     end
 
-                    % Build w by L u = y, then w = u ./ sqrt(d)
-                    sd     = sqrt(max(d, eps));
+                    % Build w implicitly, via u, and get ||w||^2 = sum(u.^2 ./ d)
                     u      = zeros(t, 1);
                     u(1) = y(1);
                     for i = 2:t
                         u(i) = y(i) - l(i - 1) * u(i - 1);
                     end
-                    w      = u ./ sd;
+                    wn2    = sum(u.^2 ./ max(d, eps)); % norm(w)^2
 
                     yn     = norm(y);
-                    wn     = norm(w);
-                    phi    = sigma * yn - lamda;   % secular residual in this subspace
-
-                    % Update the bracket
-                    if phi > 0
-                        lam_lower = max(lam_lower, lamda);   % lambda too small, lift lower bound
-                    else
-                        lam_upper = min(lam_upper, lamda);   % lambda too large, lower upper bound
-                    end
+                    phi    = sigma * yn - lamda;    % secular residual in this subspace
 
                     % Residual measure passed to your termination rule (kept unchanged)
-                    norm_g = abs(phi) * yn;
-                    rnorm  = norm_g + betan * abs(y(end));
+                    grad_m = phi * y;
+                    grad_m(end) = grad_m(end) + betan * yn;
+                    norm_gl = norm_g;
+                    norm_g  = norm(grad_m);
+                    if norm_g < norm_gl
+                        best_y = y;
+                    end
 
+                    % Package run_info for generic termination rule
                     run_info = struct( ...
-                                      norm_g = rnorm, ... % return || nabla m ||
-                                      x = y, ... % should be V(:,1:t) * y, but ||x|| = ||y||
-                                      iteration = iterations, ...
-                                      sigma = sigma, ...
-                                      optional = struct() ...
+                                      "norm_g",   norm_g, ...
+                                      "x",        y, ... % ||x|| = ||y||
+                                      "iteration", t, ...
+                                      "sigma",    sigma, ...
+                                      "optional", struct() ...
                                      );
+
                     [terminate, status] = obj.termination_rule.should_terminate(run_info);
                     if terminate
-                        best_x = V(:, 1:t) * y;
+                        best_x = V(:, 1:numel(best_y)) * best_y;
                         status = Optimization_Status.SUCCESS;
                         return
                     end
 
-                    % One lambda update per t (CGT-GLRT 9.2.1)
-                    if phi > 0
-                        % In L (too small): ONE safeguarded Newton step, clipped to the bracket
-                        derphi    = -sigma * (wn^2) / max(yn, eps) - 1;   % strictly negative in theory
-                        delta_lam = -phi / max(derphi, -eps);
-                        lam_cand  = lamda + delta_lam;
-
-                        % If Newton leaves the bracket or is not finite, fall back to bracket step
-                        out_of_bracket = ~isfinite(lam_cand) || ...
-                                         (isfinite(lam_upper) && (lam_cand >= lam_upper - ...
-                                                                  clip_margin * max(1, lam_upper - lam_lower))) || ...
-                                         (lam_cand <= lam_lower + clip_margin * max(1, lam_upper - lam_lower));
-                        if out_of_bracket
-                            if isfinite(lam_upper)
-                                lam_geom = sqrt(lam_lower * lam_upper);
-                                lam_lin  = lam_lower + theta * (lam_upper - lam_lower);
-                                lam_cand = max(lam_geom, lam_lin);
-                            else
-                                lam_cand = max(lamda, lamda + max(1e-18, 1e-6 * max([1, lamda, lam_lower])));
-                            end
-                        end
-                    else
-                        % In G (too large): bracket step only (no Newton)
-                        if isfinite(lam_upper)
-                            lam_geom = sqrt(lam_lower * lam_upper);
-                            lam_lin  = lam_lower + theta * (lam_upper - lam_lower);
-                            lam_cand = max(lam_geom, lam_lin);
+                    % Hard cap on lambda iterations
+                    if lambda_iters >= max_escalate || abs(phi) <= 1e-10 + 1e-10 * max(1, lamda) || ...
+                            lam_upper - lam_lower < 1e-10
+                        if betan < eps
+                            status = Optimization_Status.NUMERICAL_ISSUES;
+                            best_x = V(:, 1:numel(y)) * y;
+                            return
                         else
-                            lam_cand = max(lamda, lamda + max(eps, 1e-6 * max([1, lamda, lam_lower])));
+                            lambda_status = 'E';
+                            break
                         end
                     end
 
-                    % Clip strictly inside the bracket and keep lambda nondecreasing
-                    if isfinite(lam_upper)
-                        left  = lam_lower + clip_margin * max(1, lam_upper - lam_lower);
-                        right = lam_upper - clip_margin * max(1, lam_upper - lam_lower);
-                        % Guard: if the right edge has collapsed to lamda (or below), do not decrease lambda.
-                        right = max(right, lamda);
-                        lam_cand = min(max(lam_cand, max(lamda, left)), right);
+                    % Update the bracket for lambda_t
+                    if phi < 0
+                        lambda_status = 'G';  % lambda too large (in G)
+                        lam_upper = min(lam_upper, lamda);   % lambda too large, lower upper bound
+                        % Change 2: Check for crossover
                     else
-                        lam_cand = max(lam_cand, lamda);
+                        lambda_status = 'L';
+                        lam_lower = max(lam_lower, lamda);   % lambda too small, lift lower bound
+                        % Change 2: Check for crossover
+                        % if lam_lower >= lam_upper
+                        %     lam_upper = lam_lower + eps;
+                        % end
+                    end
+
+                    if lam_upper <= lam_lower
+                        % lam_lower = max(0, lam_upper - eps);
+                        best_x = V(:, 1:numel(best_y)) * best_y;
+                        status = Optimization_Status.NUMERICAL_ISSUES;
+                        return
+                    end
+
+                    % -----------------------------------------------------------------
+                    % One lambda update per t:
+                    %   Newton step in both L and G, safeguarded by the bracket.
+                    %   If Newton step not acceptable, fall back to bracket step.
+                    % -----------------------------------------------------------------
+
+                    % Count this as one lambda search iteration for the current T
+                    lambda_iters = lambda_iters + 1;
+                    derphi = -sigma * wn2 / max(yn, eps) - 1;
+                    lambda_newton = lamda - phi / derphi;
+
+                    % Bracket-based candidate (geometric/linear split)
+                    if isfinite(lam_upper)
+                        lam_geom = sqrt(lam_lower * lam_upper);
+                        lam_lin  = lam_lower + theta * (lam_upper - lam_lower);
+                        lam_br   = max(lam_geom, lam_lin);
+                    else
+                        % Robust expansion if no upper bound
+                        lam_br = lam_lower + max(eps, clip_margin * max([1, abs(lamda), abs(lam_lower)]));
+                    end
+
+                    % Decide if Newton candidate is acceptable (strictly inside bracket)
+                    if isfinite(lam_upper)
+                        scale = max(eps, lam_upper - lam_lower); % Change 3: Ensure non-zero scale
+                    else
+                        scale = max(1, abs(lam_lower));
+                    end
+                    delta = clip_margin * scale;
+
+                    if isfinite(lam_upper)
+                        newton_inside = isfinite(lambda_newton) && ...
+                                        (lambda_newton > lam_lower + delta) && ...
+                                        (lambda_newton < lam_upper - delta);
+                    else
+                        newton_inside = isfinite(lambda_newton) && ...
+                                        (lambda_newton > lam_lower + delta);
+                    end
+
+                    if newton_inside
+                        lam_cand = lambda_newton;
+                    else
+                        lam_cand = lam_br;
+                    end
+
+                    % Final bracket clipping: keep lambda strictly inside (lam_lower, lam_upper)
+                    if isfinite(lam_upper)
+                        left  = lam_lower + clip_margin * max(eps, lam_upper - lam_lower);
+                        right = lam_upper - clip_margin * max(eps, lam_upper - lam_lower);
+                        % Ensure right > left in case of extreme closeness
+                        if right <= left
+                            % right = lam_upper;
+                            % left = lam_lower;
+                            best_x = V(:, 1:numel(best_y)) * best_y;
+                            status = Optimization_Status.NUMERICAL_ISSUES;
+                            return
+                        end
+                        lam_cand = min(max(lam_cand, left), right);
+                    else
+                        lam_cand = max(lam_cand, lam_lower + ...
+                                       clip_margin * max(1, abs(lamda) - abs(lam_lower)));
                     end
 
                     lamda = lam_cand;
 
-                    % One lambda update per t, proceed to the next Lanczos step
+                    % One lambda update per t, proceed (either new Lanczos step if t<n,
+                    % or another lambda-refinement step if t>=n).
                     break
                 end
             end
@@ -294,9 +366,9 @@ classdef GLRT_Parameters < Optimization_Parameters
 
         function [vn, alfa, betan] = lanczos(H, v, vp, beta)
             % One Lanczos step: vn (pre-reorth residual direction), alfa = v'*H*v, betan_raw = ||vn||.
-            Av   = mat_vec(H, v);
+            Av    = mat_vec(H, v);
             alfa = v' * Av;
-            vn   = Av - v * alfa - vp * beta;
+            vn    = Av - v * alfa - vp * beta;
             betan = norm(vn);
         end
 
@@ -318,8 +390,8 @@ classdef GLRT_Parameters < Optimization_Parameters
                     d(1) = alpha(1) + lamda;
                     scale1 = max(1, abs(alpha(1)) + abs(lamda));
                     if d(1) <= tau_d * scale1 % numerical stability
-                        lam_min      = -alpha(1);
-                        lam_min_saf  = max(lam_min_saf, lam_min + 4 * sqe * scale1);
+                        lam_min       = -alpha(1);
+                        lam_min_saf   = max(lam_min_saf, lam_min + 4 * sqe * scale1);
                         has_nc = true;
                         return
                     end
@@ -333,8 +405,8 @@ classdef GLRT_Parameters < Optimization_Parameters
 
                     scale_i = max([1, abs(alpha(i) + lamda), ref]);
                     if d(i) <= 4 * sqe * scale_i % numerical stability
-                        lam_min      = ref - alpha(i);
-                        lam_min_saf  = max(lam_min_saf, lam_min + 4 * sqe * scale_i);
+                        lam_min       = ref - alpha(i);
+                        lam_min_saf   = max(lam_min_saf, lam_min + 4 * sqe * scale_i);
                         has_nc = true;
                         return
                     end
