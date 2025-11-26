@@ -38,6 +38,10 @@ classdef MCMR_Parameters < Optimization_Parameters
     methods
 
         function [status, best_x, iteration] = run(obj, ~, c, mat, sigma, r)
+            if isa(mat, "function_handle")
+                error("MCMR needs an explicit representation of the matrix, but a function handle was provided");
+            end
+
             residual = @(x) c + mat * x;
             n = length(c);
             identity = eye(n, n);
