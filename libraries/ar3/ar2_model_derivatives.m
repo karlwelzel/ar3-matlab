@@ -39,6 +39,10 @@ function [m, der1m, der2m] = ar2_model_derivatives(s, f, der1f, der2f, sigma)
     end
 
     if nargout > 2
-        der2m = der2f + sigma * (norm(s) * eye(n) + (s * s') / norm(s));
+        if norm(s) == 0
+            der2m = der2f;
+        else
+            der2m = der2f + sigma * (norm(s) * eye(n) + (s * s') / norm(s));
+        end
     end
 end
