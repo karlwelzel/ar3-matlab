@@ -20,6 +20,7 @@ echo "Using Python: $PYTHON"
 "$PYTHON" "wandb2performance_profiles theta_GN_benchmark.py"
 "$PYTHON" "wandb2performance_profiles 2vs3.py"
 "$PYTHON" "wandb2performance_profiles benchmark.py"
+"$PYTHON" "wandb2performance_profiles GLRT.py"
 
 # Generate convergence plots for the same set of experiments
 "$PYTHON" "wandb2convergence_plot sigma0.py"
