@@ -1,46 +1,13 @@
+import wandb
 import json
 import os
-
-import matplotlib.pyplot as plt
-import wandb
-
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
-
-
-def set_plot_asthetics():
-    """
-    Simple PGF + LaTeX setup that does NOT import ../settings/math.tex.
-    This avoids the pdflatex error you are seeing.
-    """
-    plt.switch_backend("pgf")
-    plt.rc(
-        "pgf",
-        texsystem="pdflatex",
-        rcfonts=False,
-        preamble=r"""
-            \usepackage{amsmath,amssymb}
-            \usepackage{bm}
-        """,
-    )
-    plt.rc("text", usetex=True)
-    plt.rc("font", family="serif", serif="Computer Modern Roman")
-    plt.rc("lines", markersize=2.0, linewidth=1.0)
-    plt.rc("savefig", dpi=300)
-
+from wandb_tools import set_plot_asthetics
 
 groups = ["Exp_Benchmark_8"]
 histories = cache_run_histories(groups)
-
-print("Cached groups:", list(histories.keys()))
-if "Exp_Benchmark_8" in histories:
-    print(
-        "Number of problems in Exp_Benchmark_8 cache:",
-        len(histories["Exp_Benchmark_8"]),
-    )
-else:
-    print("WARNING: 'Exp_Benchmark_8' not found in histories dict.")
 
 # api = wandb.Api(timeout=10000)
 api = wandb.Api()
@@ -50,13 +17,6 @@ wandb_runs = api.runs(
         "group": "Exp_Benchmark_8",
     },
 )
-
-print("Number of runs fetched from W&B:", len(wandb_runs))
-if len(wandb_runs) == 0:
-    raise RuntimeError(
-        "No runs found for group 'Exp_Benchmark_8'. "
-        "Check the project path and group name in W&B."
-    )
 
 inner_inner_solvers = {run.config.get("inner_inner_solver", None) for run in wandb_runs}
 inner_inner_stop_rules = {
@@ -128,15 +88,8 @@ categorized_runs = categorize_runs(
     error_on_duplicate=True,
 )
 
-print("sorted_methods:", categorized_runs.sorted_methods)
-print("Number of problem setups:", len(categorized_runs.all_problem_setups))
-
-if not categorized_runs.sorted_methods:
-    raise RuntimeError(
-        "categorized_runs.sorted_methods is empty. "
-        "Likely either histories are missing/empty for Exp_Benchmark_8, "
-        "or none of the runs have the required method parameters set."
-    )
+print(f"{categorized_runs.sorted_methods=}")
+print(f"{len(categorized_runs.all_problem_setups)=}")
 
 new_labels: list[str] = []
 for method in categorized_runs.sorted_methods:
@@ -150,14 +103,14 @@ for method in categorized_runs.sorted_methods:
     else:
         solver_label = solver
     if stop_rule == "First_Order":
-        acc_label = "Exact"
+        acc_label = r"$\norm{\nabla \tilde{m}_k} \leq 10^{-10}$"
     elif stop_rule == "ARP_Theory":
-        acc_label = "Inexact"
+        acc_label = r"$\norm{\nabla \tilde{m}_k} \leq 10^2 \norm{\tilde{\vek{s}}}^2$"
     else:
         acc_label = stop_rule
 
     # Example: \textsf{MCM, Exact}, \textsf{GLRT, Inexact}
-    label = rf"\textsf{{{solver_label}, {acc_label}}}"
+    label = rf"\textsf{{AR3-Interp\textsuperscript{{+}} + AR2-Simple + {solver_label}, {acc_label}}}"
     new_labels.append(label)
 
 print("Legend labels (in order):", new_labels)
