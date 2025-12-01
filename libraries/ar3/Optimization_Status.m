@@ -6,6 +6,7 @@ classdef Optimization_Status < int32
         NUMERICAL_ISSUES (-2)
         ILL_CONDITIONED (-3)
         NOT_LOWER_BOUNDED (-4)
+        MAX_TIME_EXCEEDED (-5)
         USER_TERMINATED (-100)
     end
 end
