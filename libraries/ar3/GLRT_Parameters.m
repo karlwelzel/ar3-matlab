@@ -37,7 +37,7 @@ classdef GLRT_Parameters < Optimization_Parameters
 
     methods
 
-        function [status, best_x, t, sigma] = run(obj, ~, g, H, sigma)
+        function [status, best_x, t] = run(obj, ~, g, H, sigma)
             arguments
                 obj
                 ~
@@ -414,24 +414,23 @@ classdef GLRT_Parameters < Optimization_Parameters
             end
         end
 
-        % Build explicit (T + lambda*I) and RHS beta1*e1 from tridiagonal data (for checks)
-        function [Tlam, rhs] = build_tridiag_system(alpha, beta, lambda, beta1)
-            t = numel(alpha);
-            if t == 0
-                Tlam = [];
-                rhs = [];
-                return
-            end
-            if ~isempty(beta) && numel(beta) ~= t - 1
-                error('beta must have length t-1 where t = numel(alpha).');
-            end
-            Tlam = diag(alpha + lambda);
-            if t >= 2
-                Tlam = Tlam + diag(beta, +1) + diag(beta, -1);
-            end
-            rhs    = zeros(t, 1);
-            rhs(1) = beta1;
-        end
-
+        %% Build explicit (T + lambda*I) and RHS beta1*e1 from tridiagonal data (for checks)
+        % function [Tlam, rhs] = build_tridiag_system(alpha, beta, lambda, beta1)
+        %     t = numel(alpha);
+        %     if t == 0
+        %         Tlam = [];
+        %         rhs = [];
+        %         return
+        %     end
+        %     if ~isempty(beta) && numel(beta) ~= t - 1
+        %         error('beta must have length t-1 where t = numel(alpha).');
+        %     end
+        %     Tlam = diag(alpha + lambda);
+        %     if t >= 2
+        %         Tlam = Tlam + diag(beta, +1) + diag(beta, -1);
+        %     end
+        %     rhs    = zeros(t, 1);
+        %     rhs(1) = beta1;
+        % end
     end
 end
