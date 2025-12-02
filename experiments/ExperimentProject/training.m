@@ -30,6 +30,12 @@ function output = training(params, monitor)
         params = rmfield(params, "x0_type");
     end
 
+    n = size(x0, 1);
+    params.inner_stop_theta = 10^(log2(n));
+    if params.p == 3
+        params.inner_inner_stop_theta = 10^(log2(n));
+    end
+    
     % Determine subproblem solver and AR3 parameters
     arp_parameters = ARP_Parameters.from_struct(params);
 
