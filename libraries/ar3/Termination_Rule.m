@@ -6,7 +6,7 @@ classdef (Abstract) Termination_Rule < Parameters
 
     properties
         outer_run (1, 1) = struct() % Optimization_Run or struct
-        max_time (1, 1) double {mustBePositive} = inf
+        max_time (1, 1) double {mustBePositive} = Inf
         max_iterations (1, 1) double {mustBeInteger, mustBePositive} = 1000
     end
 
@@ -47,7 +47,6 @@ classdef (Abstract) Termination_Rule < Parameters
                 terminate (1, 1) logical
                 status (1, 1) Optimization_Status
             end
-
             if isa(run, "Optimization_Run") && run.f < -1 / eps && run.norm_g > 1 / eps && ...
               run.norm_step ~= 0
                 terminate = true;
@@ -55,7 +54,8 @@ classdef (Abstract) Termination_Rule < Parameters
             elseif run.iteration >= obj.max_iterations
                 terminate = true;
                 status = Optimization_Status.MAX_ITERATIONS_EXCEEDED;
-            elseif run.current_history_row.time >= obj.max_time
+            elseif run.status == Optimization_Status.RUNNING && ... 
+                    run.current_history_row.time >= obj.max_time
                 terminate = true;
                 status = Optimization_Status.MAX_TIME_EXCEEDED;
             elseif isfield(run.optional, "monitor") && run.optional.monitor.Stop
@@ -66,6 +66,5 @@ classdef (Abstract) Termination_Rule < Parameters
                 status = Optimization_Status.RUNNING;
             end
         end
-
     end
 end
