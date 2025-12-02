@@ -54,7 +54,8 @@ classdef (Abstract) Termination_Rule < Parameters
             elseif run.iteration >= obj.max_iterations
                 terminate = true;
                 status = Optimization_Status.MAX_ITERATIONS_EXCEEDED;
-            elseif run.status == Optimization_Status.RUNNING && ... 
+            elseif isa(run, "Optimization_Run") && ...
+                    run.status == Optimization_Status.RUNNING && ... 
                     run.current_history_row.time >= obj.max_time
                 terminate = true;
                 status = Optimization_Status.MAX_TIME_EXCEEDED;
