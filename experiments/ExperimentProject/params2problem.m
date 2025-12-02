@@ -54,13 +54,15 @@ function [x0, f_handle] = params2problem(problem)
             x0 = ones(objective.dim, 1);
             x0(1) = -1;
         elseif objective.name == "nonlinear_least_squares_matfree"
-            mat = rand(n, n);
+            m = n;
+            mat = rand(m, n);
             b = zeros(n, 1);
             b(1:floor(n / 2)) = 1;
             f_handle = @(x) nonlinear_least_squares_matfree(mat, b, x);
             x0 = zeros(objective.dim, 1);
         elseif objective.name == "nonlinear_least_squares"
-            mat = rand(n, n);
+            m = n;
+            mat = rand(m, n);
             b = zeros(n, 1);
             b(1:floor(n / 2)) = 1;
             f_handle = @(x) nonlinear_least_squares(mat, b, x);
