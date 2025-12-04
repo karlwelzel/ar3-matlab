@@ -1,11 +1,12 @@
 import json
 import os
 from collections import defaultdict
+import pathlib
 
 import matplotlib.pyplot as plt
 import wandb
 
-from wandb_tools import cache_run_histories
+from wandb_tools import cache_run_summaries
 from wandb_tools import categorize_runs
 from wandb_tools import set_plot_asthetics
 
@@ -14,28 +15,34 @@ from wandb_tools import set_plot_asthetics
 # Configuration
 # ============================================================
 GROUPS = ["Exp_Benchmark_9"]
-histories = cache_run_histories(GROUPS)
+histories = cache_run_summaries(GROUPS)
 
-THRESH_NORMG = 1e-6  # threshold for marking "unsolved" points
+THRESH_NORMG = 1e-6  # threshold for empty-circle markers
 
 # Per-method styles: consistent across all plots
 # (p, solver) -> style
+# p=1 has no inner solver: we encode solver="BASE"
 STYLE_BY_METHOD = {
-    (2, "MCMR"): {"color": "C0", "marker": "s", "linestyle": "-"},
-    (2, "GLRT"): {"color": "C1", "marker": "o", "linestyle": "--"},
-    (3, "MCMR"): {"color": "C2", "marker": "s", "linestyle": "-"},
-    (3, "GLRT"): {"color": "C3", "marker": "o", "linestyle": "--"},
+    (1, "BASE"): {"color": "C4", "marker": "d", "linestyle": "-"},
+    (2, "MCMR"): {"color": "C0", "marker": "s", "linestyle": "--"},
+    (2, "GLRT"): {"color": "C1", "marker": "o", "linestyle": "-."},
+    (3, "MCMR"): {"color": "C2", "marker": "s", "linestyle": "--"},
+    (3, "GLRT"): {"color": "C3", "marker": "o", "linestyle": "-."},
 }
 
-# Desired ordering of methods
+# Desired ordering of methods in legends/plots
 ORDER_INDEX = {
-    (2, "MCMR"): 0,  # AR2 + MCMR
-    (2, "GLRT"): 1,  # AR2 + GLRT
-    (3, "MCMR"): 2,  # AR3 + MCMR
-    (3, "GLRT"): 3,  # AR3 + GLRT
+    (1, "BASE"): 0,   # p=1 baseline
+    (2, "MCMR"): 1,   # AR2 + MCMR
+    (2, "GLRT"): 2,   # AR2 + GLRT
+    (3, "MCMR"): 3,   # AR3 + MCMR
+    (3, "GLRT"): 4,   # AR3 + GLRT
 }
 
 
+# ============================================================
+# Helpers
+# ============================================================
 def get_final(history, col):
     """Return the last value of column `col` from the history, or None."""
     last = history.iloc[-1]
@@ -56,12 +63,15 @@ def get_dimension(problem_value):
 def method_id_from_method_string(method_str):
     """
     Return (p, solver) for a method JSON string:
-      - solver = inner_solver if p=2
-      - solver = inner_inner_solver if p=3
+      - if p=1: solver = "BASE"
+      - if p=2: solver = inner_solver
+      - if p=3: solver = inner_inner_solver
     """
     m = json.loads(method_str)
     p_val = m["p"]
-    if p_val == 2:
+    if p_val == 1:
+        solver = "BASE"
+    elif p_val == 2:
         solver = m["inner_solver"]
     elif p_val == 3:
         solver = m["inner_inner_solver"]
@@ -72,6 +82,8 @@ def method_id_from_method_string(method_str):
 
 def method_label(p_val, solver):
     """LaTeX label for a method."""
+    if p_val == 1:
+        return r"\textsf{AR1}"
     solver_label = "MCM" if solver == "MCMR" else solver
     if p_val == 2:
         return rf"\textsf{{AR2-Interp + {solver_label}}}"
@@ -85,12 +97,12 @@ def method_sort_key(method_str):
     return ORDER_INDEX[(p_val, solver)]
 
 
-def mark_unsolved(ax, dims, y_vals, metrics_for_dim, color, tol=THRESH_NORMG):
-    """Overlay empty circles where final norm_g > tol."""
+def mark_unsolved(ax, dims, y_vals, metrics_for_dim, color):
+    """Overlay empty circles where norm_g > THRESH_NORMG."""
     bad_x, bad_y = [], []
     for d, y in zip(dims, y_vals):
         g = metrics_for_dim[d].get("norm_g")
-        if g is not None and g > tol:
+        if g is not None and g > THRESH_NORMG:
             bad_x.append(d)
             bad_y.append(y)
 
@@ -109,21 +121,12 @@ def mark_unsolved(ax, dims, y_vals, metrics_for_dim, color, tol=THRESH_NORMG):
 # ============================================================
 # Fetch runs and categorize
 # ============================================================
+# Use timeout to prevent hanging, but cache_run_summaries is preferred
 api = wandb.Api(timeout=10000)
 wandb_runs = api.runs(
     path="ar3-project/all_experiments",
     filters={
         "group": {"$in": GROUPS},
-        "$and": [
-            {
-                "$or": [
-                    {"config.inner_solver": "GLRT", "config.p": 2},
-                    {"config.inner_solver": "MCMR", "config.p": 2},
-                    {"config.inner_inner_solver": "GLRT", "config.p": 3},
-                    {"config.inner_inner_solver": "MCMR", "config.p": 3},
-                ]
-            }
-        ],
     },
 )
 
@@ -167,6 +170,10 @@ method_to_dim_metrics = defaultdict(dict)
 
 for run in categorized_runs:
     p_val, solver = method_id_from_method_string(run.method)
+    # Skip methods we didn't define a style for
+    if (p_val, solver) not in STYLE_BY_METHOD:
+        continue
+
     dim = get_dimension(run.problem)
     hist = run.history
 
@@ -179,7 +186,7 @@ for run in categorized_runs:
     current = method_to_dim_metrics[key].get(dim)
 
     # If multiple runs exist for the same (p, solver, dim), keep the one with smaller final time
-    if current is None or time_val < current["time"]:
+    if current is None or (time_val is not None and time_val < current["time"]):
         method_to_dim_metrics[key][dim] = {
             "time": time_val,
             "total_hvp": total_hvp,
@@ -202,12 +209,12 @@ all_dims = sorted(all_dims)
 set_plot_asthetics()
 os.makedirs("rosenbrock_scaling", exist_ok=True)
 
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(7.5, 3.2))
+
 
 # ============================================================
 # Plot 1: Time vs dimension (log2 x, log y)
 # ============================================================
-fig1, ax1 = plt.subplots(figsize=(4, 3))
-
 for (p_val, solver), dim_metrics in sorted(
     method_to_dim_metrics.items(), key=lambda kv: ORDER_INDEX[kv[0]]
 ):
@@ -222,29 +229,25 @@ for (p_val, solver), dim_metrics in sorted(
 
     mark_unsolved(ax1, dims, times, dim_metrics, color)
 
+# Define exponents 2, 4, ..., 14
+exponents = range(2, 16, 2) 
+custom_ticks = [2**e for e in exponents]
+custom_labels = [rf"$2^{{{e}}}$" for e in exponents]
+
+
 ax1.set_xscale("log", base=2)
 ax1.set_yscale("log")
-ax1.set_xticks(all_dims)
-ax1.set_xticklabels([str(d) for d in all_dims])
+ax1.set_xticks(custom_ticks)
+ax1.set_xticklabels(custom_labels)
 ax1.set_xlabel("Dimension")
 ax1.set_ylabel("Time (s)")
-ax1.set_title("Time vs Dimension")
+ax1.set_title("Time vs dimension")
 ax1.grid(True, which="both", linestyle=":", linewidth=0.5)
-ax1.legend()
-fig1.tight_layout()
-
-pgf_time = "rosenbrock_scaling/rosenbrock_time_vs_dim_log2.pgf"
-png_time = "rosenbrock_scaling/rosenbrock_time_vs_dim_log2.png"
-fig1.savefig(pgf_time)
-fig1.savefig(png_time, dpi=300)
-print(f"Saved {pgf_time!r} and {png_time!r}")
 
 
 # ============================================================
 # Plot 2: Total HVP vs dimension (GLRT only, log2 x, log y)
 # ============================================================
-fig2, ax2 = plt.subplots(figsize=(4, 3))
-
 for (p_val, solver), dim_metrics in sorted(
     method_to_dim_metrics.items(), key=lambda kv: ORDER_INDEX[kv[0]]
 ):
@@ -273,27 +276,17 @@ for (p_val, solver), dim_metrics in sorted(
 
 ax2.set_xscale("log", base=2)
 ax2.set_yscale("log")
-ax2.set_xticks(all_dims)
-ax2.set_xticklabels([str(d) for d in all_dims])
+ax2.set_xticks(custom_ticks)
+ax2.set_xticklabels(custom_labels)
 ax2.set_xlabel("Dimension")
 ax2.set_ylabel("Total HVPs")
-ax2.set_title("HVPs vs Dimension")
+ax2.set_title("HVPs (GLRT) vs dimension")
 ax2.grid(True, which="both", linestyle=":", linewidth=0.5)
-ax2.legend()
-fig2.tight_layout()
-
-pgf_hvp = "rosenbrock_scaling/rosenbrock_hvp_vs_dim_log2.pgf"
-png_hvp = "rosenbrock_scaling/rosenbrock_hvp_vs_dim_log2.png"
-fig2.savefig(pgf_hvp)
-fig2.savefig(png_hvp, dpi=300)
-print(f"Saved {pgf_hvp!r} and {png_hvp!r}")
 
 
 # ============================================================
 # Plot 3: Total Chol vs dimension (MCMR only, log2 x, log y)
 # ============================================================
-fig3, ax3 = plt.subplots(figsize=(4, 3))
-
 for (p_val, solver), dim_metrics in sorted(
     method_to_dim_metrics.items(), key=lambda kv: ORDER_INDEX[kv[0]]
 ):
@@ -322,17 +315,40 @@ for (p_val, solver), dim_metrics in sorted(
 
 ax3.set_xscale("log", base=2)
 ax3.set_yscale("log")
-ax3.set_xticks(all_dims)
-ax3.set_xticklabels([str(d) for d in all_dims])
+ax3.set_xticks(custom_ticks)
+ax3.set_xticklabels(custom_labels)
 ax3.set_xlabel("Dimension")
 ax3.set_ylabel("Total Cholesky factorizations")
-ax3.set_title("Cholesky vs Dimension")
+ax3.set_title("Cholesky (MCM) vs dimension")
 ax3.grid(True, which="both", linestyle=":", linewidth=0.5)
-ax3.legend()
-fig3.tight_layout()
 
-pgf_chol = "rosenbrock_scaling/rosenbrock_chol_vs_dim_log2.pgf"
-png_chol = "rosenbrock_scaling/rosenbrock_chol_vs_dim_log2.png"
-fig3.savefig(pgf_chol)
-fig3.savefig(png_chol, dpi=300)
-print(f"Saved {pgf_chol!r} and {png_chol!r}")
+
+# ============================================================
+# Consolidated legend above all three plots
+# ============================================================
+handles, labels = ax1.get_legend_handles_labels()
+seen = set()
+uniq_handles, uniq_labels = [], []
+for h, lab in zip(handles, labels):
+    if lab not in seen:
+        uniq_handles.append(h)
+        uniq_labels.append(lab)
+        seen.add(lab)
+        
+fig.legend(
+    uniq_handles,
+    uniq_labels,
+    loc="lower center",
+    ncol=3, 
+    bbox_to_anchor=(0.5, 0.85),
+    frameon=True,
+)
+
+# Reserve top 15% of space for the legend
+fig.tight_layout(rect=(0, 0, 1, 0.85))
+
+out_pgf = "rosenbrock_scaling/rosenbrock_time_hvp_chol_vs_dim_log2.pgf"
+out_png = "rosenbrock_scaling/rosenbrock_time_hvp_chol_vs_dim_log2.png"
+fig.savefig(out_pgf)
+fig.savefig(out_png, dpi=300)
+print(f"Saved {out_pgf!r} and {out_png!r}")
