@@ -129,7 +129,7 @@ def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
 
         histories = dict()
         for j, wandb_run in enumerate(wandb_runs):
-            histories[wandb_run.name] = wandb_run.history(samples=5000, pandas=True)
+            histories[wandb_run.name] = wandb_run.history(samples=1e8, pandas=True)
             print(f"{j+1}/{len(wandb_runs)}")
 
         with open(cache_file, "wb") as f:
