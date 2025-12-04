@@ -112,38 +112,26 @@ def categorize_runs(
     categorized_runs.sort(key=lambda run: (str(run.method), str(run.problem)))
     return categorized_runs
 
-
 def cache_run_summaries(groups: list[str]) -> dict[str, pandas.DataFrame]:
     """
-    Downloads ONLY the final summary (last row) of the runs.
-    Use this for large experiments (e.g. >10k steps) to avoid HTTP 500 errors.
+    Downloads the final summary (last row) of the runs only.
+    Auto-recovers from corrupted cache files by deleting and re-downloading to avoid bugs.
     """
-    # Prepare cache file for all relevant runs
-    cache_file = pathlib.Path(" ".join(groups) + "_summary_cache.bin")
-    if cache_file.exists():
-        print(f"Loading summaries from cache: {cache_file}")
-        with open(cache_file, "rb") as f:
-            histories = pickle.load(f)
-    else:
-        print("Downloading run summaries from WandB...")
-        api = wandb.Api()
-        wandb_runs = api.runs(
-            path="ar3-project/all_experiments",
-            filters={"$or": [{"group": group} for group in groups]},
-        )
+    api = wandb.Api()
+    wandb_runs = api.runs(
+        path="ar3-project/all_experiments",
+        filters={"$or": [{"group": group} for group in groups]},
+    )
 
-        histories = dict()
-        for j, wandb_run in enumerate(wandb_runs):
-            # .summary retrieves the final values (last row) instantly.
-            summary_dict = dict(wandb_run.summary)
-            histories[wandb_run.name] = pandas.DataFrame([summary_dict])
-            
-            print(f"{j+1}/{len(wandb_runs)}: fetched summary for {wandb_run.name}")
+    summaries: dict[str, pandas.DataFrame] = {}
 
-        with open(cache_file, "wb") as f:
-            pickle.dump(histories, f)
+    for j, wandb_run in enumerate(wandb_runs):
+        summary_dict = dict(wandb_run.summary)
+        summaries[wandb_run.name] = pandas.DataFrame([summary_dict])
+        print(f"{j+1}/{len(wandb_runs)}: fetched summary for {wandb_run.name}")
 
-    return histories
+    return summaries
+
 
 def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
     # Prepare cache file for all relevant runs
