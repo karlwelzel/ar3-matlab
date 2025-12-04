@@ -146,7 +146,7 @@ for method in categorized_runs.sorted_methods:
             acc_label = r"$\|\nabla m_k\| \leq 10^{-9}$"
     elif stop_rule == "ARP_Theory":
         if p_val == 3:
-            acc_label = r"$\|\nabla \tilde{m}_k\| \leq 10^2 \|\tilde{\mathbf{s}}_k\|^3$"
+            acc_label = r"$\|\nabla \tilde{m}_k\| \leq 10^2 \|\tilde{\mathbf{s}}_k\|^2$"
         else:
             acc_label = r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}_k\|^2$"
     else:
