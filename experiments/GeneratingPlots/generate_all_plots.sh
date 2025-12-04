@@ -34,3 +34,4 @@ echo "Using Python: $PYTHON"
 # Generate special plots
 "$PYTHON" "local_minimizer_discontinuity.py"
 "$PYTHON" "illustration_ARp.py"
+"$PYTHON" "wandb2time GLRT.py"
