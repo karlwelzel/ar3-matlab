@@ -113,6 +113,23 @@ def categorize_runs(
     return categorized_runs
 
 
+def download_run_summaries(groups: list[str]) -> dict[str, pandas.DataFrame]:
+    api = wandb.Api()
+    wandb_runs = api.runs(
+        path="ar3-project/all_experiments",
+        filters={"$or": [{"group": group} for group in groups]},
+    )
+
+    summaries: dict[str, pandas.DataFrame] = {}
+
+    for j, wandb_run in enumerate(wandb_runs):
+        summary_dict = dict(wandb_run.summary)
+        summaries[wandb_run.name] = pandas.DataFrame([summary_dict])
+        print(f"{j+1}/{len(wandb_runs)}: fetched summary for {wandb_run.name}")
+
+    return summaries
+
+
 def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
     # Prepare cache file for all relevant runs
     cache_file = pathlib.Path(" ".join(groups) + "_cache.bin")
