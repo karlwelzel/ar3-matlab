@@ -113,14 +113,19 @@ def categorize_runs(
     return categorized_runs
 
 
-def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
+def cache_run_summaries(groups: list[str]) -> dict[str, pandas.DataFrame]:
+    """
+    Downloads ONLY the final summary (last row) of the runs.
+    Use this for large experiments (e.g. >10k steps) to avoid HTTP 500 errors.
+    """
     # Prepare cache file for all relevant runs
-    cache_file = pathlib.Path(" ".join(groups) + "_cache.bin")
+    cache_file = pathlib.Path(" ".join(groups) + "_summary_cache.bin")
     if cache_file.exists():
+        print(f"Loading summaries from cache: {cache_file}")
         with open(cache_file, "rb") as f:
             histories = pickle.load(f)
     else:
-        # api = wandb.Api(timeout=10000) # avoiding timeout for the first download
+        print("Downloading run summaries from WandB...")
         api = wandb.Api()
         wandb_runs = api.runs(
             path="ar3-project/all_experiments",
@@ -129,8 +134,45 @@ def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
 
         histories = dict()
         for j, wandb_run in enumerate(wandb_runs):
-            histories[wandb_run.name] = wandb_run.history(samples=10000, pandas=True)
-            print(f"{j+1}/{len(wandb_runs)}")
+            # .summary retrieves the final values (last row) instantly.
+            summary_dict = dict(wandb_run.summary)
+            histories[wandb_run.name] = pandas.DataFrame([summary_dict])
+            
+            print(f"{j+1}/{len(wandb_runs)}: fetched summary for {wandb_run.name}")
+
+        with open(cache_file, "wb") as f:
+            pickle.dump(histories, f)
+
+    return histories
+
+def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
+    # Prepare cache file for all relevant runs
+    cache_file = pathlib.Path(" ".join(groups) + "_cache.bin")
+    
+    if cache_file.exists():
+        print(f"Loading from cache: {cache_file}")
+        with open(cache_file, "rb") as f:
+            histories = pickle.load(f)
+    else:
+        print("Downloading from WandB...")
+        api = wandb.Api()
+        wandb_runs = api.runs(
+            path="ar3-project/all_experiments",
+            filters={"$or": [{"group": group} for group in groups]},
+        )
+
+        histories = dict()
+        for j, wandb_run in enumerate(wandb_runs):
+            # ---------------------------------------------------------
+            # CHANGE IS HERE: Use .summary instead of .history()
+            # ---------------------------------------------------------
+            # .summary retrieves the final values (last row) instantly
+            # We convert the dictionary to a 1-row DataFrame to maintain 
+            # compatibility with your return type hint.
+            summary_dict = dict(wandb_run.summary)
+            histories[wandb_run.name] = pandas.DataFrame([summary_dict])
+            
+            print(f"{j+1}/{len(wandb_runs)}: fetched {wandb_run.name}")
 
         with open(cache_file, "wb") as f:
             pickle.dump(histories, f)
