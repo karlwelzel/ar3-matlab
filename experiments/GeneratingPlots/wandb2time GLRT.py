@@ -4,6 +4,7 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import numpy as np
 import wandb
 
 from wandb_tools import cache_run_summaries
@@ -17,15 +18,15 @@ from wandb_tools import set_plot_asthetics
 GROUPS = ["Exp_Benchmark_9"]
 histories = cache_run_summaries(GROUPS)
 
-THRESH_NORMG = 1e-6  # threshold for empty markers
+THRESH_NORMG = 1e-6  # threshold for deciding solved vs unsolved
 
 # Consistent across all plots
 # (p, solver) -> style
 STYLE_BY_METHOD = {
     (1, "BASE"): {"color": "C0", "marker": "*", "linestyle": "-"},
     (2, "MCMR"): {"color": "C1", "marker": "s", "linestyle": "-."},
-    (2, "GLRT"): {"color": "C2", "marker": "o", "linestyle": "--"},
-    (3, "MCMR"): {"color": "C3", "marker": "s", "linestyle": "-."},
+    (2, "GLRT"): {"color": "C2", "marker": "o", "linestyle": "-."},
+    (3, "MCMR"): {"color": "C3", "marker": "s", "linestyle": "--"},
     (3, "GLRT"): {"color": "C4", "marker": "o", "linestyle": "--"},
 }
 
@@ -89,29 +90,46 @@ def method_sort_key(method_str):
     return ORDER_INDEX[(p_val, solver)]
 
 
-def mark_unsolved(ax, dims, y_vals, metrics_for_dim, color, marker_shape):
+def separate_solved_unsolved(dims, y_vals, metrics_for_dim):
     """
-    Overlay empty markers where norm_g > THRESH_NORMG.
-    Uses the same shape as the method but with empty face.
+    Returns two lists of Y-values:
+    1. y_solved: Contains values where norm_g <= Threshold, else np.nan
+    2. y_unsolved: Contains values where norm_g > Threshold, else np.nan
     """
-    bad_x, bad_y = [], []
+    y_solved = []
+    y_unsolved = []
+    
     for d, y in zip(dims, y_vals):
         g = metrics_for_dim[d].get("norm_g")
+        
+        # Check if Unsolved
         if g is not None and g > THRESH_NORMG:
-            bad_x.append(d)
-            bad_y.append(y)
+            # It is UNSOLVED
+            y_solved.append(np.nan)
+            y_unsolved.append(y)
+        else:
+            # It is SOLVED
+            y_solved.append(y)
+            y_unsolved.append(np.nan)
+            
+    return y_solved, y_unsolved
 
-    if bad_x:
-        ax.plot(
-            bad_x,
-            bad_y,
-            linestyle="None",
-            marker=marker_shape, # Use specific marker shape
-            markersize=6,
-            markerfacecolor="none",
-            markeredgecolor=color,
-            zorder=10 # Ensure it sits on top
-        )
+
+def mark_unsolved_markers(ax, dims, y_unsolved, color, marker_shape):
+    """
+    Plots the specific hollow markers for unsolved points.
+    We pass y_unsolved which already has valid values only at unsolved indices.
+    """
+    ax.plot(
+        dims, 
+        y_unsolved, 
+        linestyle="None",       # No line, just markers
+        marker=marker_shape, 
+        markersize=6,
+        markerfacecolor="none", # Hollow
+        markeredgecolor=color,
+        zorder=10               # On top of everything
+    )
 
 
 # ============================================================
@@ -200,18 +218,28 @@ for (p_val, solver), dim_metrics in sorted(
     dims = sorted(dim_metrics.keys())
     times = [dim_metrics[d]["time"] for d in dims]
 
+    # Split data
+    y_solved, y_unsolved = separate_solved_unsolved(dims, times, dim_metrics)
+
     label = method_label(p_val, solver)
     style = STYLE_BY_METHOD[(p_val, solver)]
+    
+    # 1. Light Line (Ghost): Connects everything (including unsolved)
+    #    alpha=0.3 makes it lighter. marker=None prevents double markers.
+    ax1.plot(dims, times, 
+             color=style["color"], linestyle=style["linestyle"], 
+             marker=None, alpha=0.3, zorder=1)
 
-    (line,) = ax1.plot(dims, times, label=label, **style)
+    # 2. Main Line (Solved): Only solved segments
+    (line,) = ax1.plot(dims, y_solved, label=label, **style, zorder=2)
     color = line.get_color()
     
     # Save handle for legend
     legend_handles_map[(p_val, solver)] = line
     legend_labels_map[(p_val, solver)] = label
 
-    # Unsolved markers use same shape (d, s, or o) but empty face
-    mark_unsolved(ax1, dims, times, dim_metrics, color, style["marker"])
+    # 3. Markers (Unsolved): Hollow markers on top
+    mark_unsolved_markers(ax1, dims, y_unsolved, color, style["marker"])
 
 ax1.set_xscale("log", base=2)
 ax1.set_yscale("log")
@@ -240,13 +268,22 @@ for (p_val, solver), dim_metrics in sorted(
             hvps.append(v)
     if not dims_hvp: continue
 
+    y_solved, y_unsolved = separate_solved_unsolved(dims, hvps, dim_metrics)
+
     label = method_label(p_val, solver)
     style = STYLE_BY_METHOD[(p_val, solver)]
-    (line,) = ax2.plot(dims_hvp, hvps, label=label, **style)
+    
+    # 1. Light Line
+    ax2.plot(dims, hvps, 
+             color=style["color"], linestyle=style["linestyle"], 
+             marker=None, alpha=0.3, zorder=1)
+
+    # 2. Main Line
+    (line,) = ax2.plot(dims, y_solved, label=label, **style, zorder=2)
     color = line.get_color()
 
-    sub_metrics = {d: dim_metrics[d] for d in dims_hvp}
-    mark_unsolved(ax2, dims_hvp, hvps, sub_metrics, color, style["marker"])
+    # 3. Unsolved Markers
+    mark_unsolved_markers(ax2, dims, y_unsolved, color, style["marker"])
 
 ax2.set_xscale("log", base=2)
 ax2.set_yscale("log")
@@ -275,13 +312,22 @@ for (p_val, solver), dim_metrics in sorted(
             chols.append(v)
     if not dims_chol: continue
 
+    y_solved, y_unsolved = separate_solved_unsolved(dims, chols, dim_metrics)
+
     label = method_label(p_val, solver)
     style = STYLE_BY_METHOD[(p_val, solver)]
-    (line,) = ax3.plot(dims_chol, chols, label=label, **style)
+
+    # 1. Light Line
+    ax3.plot(dims, chols, 
+             color=style["color"], linestyle=style["linestyle"], 
+             marker=None, alpha=0.3, zorder=1)
+
+    # 2. Main Line
+    (line,) = ax3.plot(dims, y_solved, label=label, **style, zorder=2)
     color = line.get_color()
 
-    sub_metrics = {d: dim_metrics[d] for d in dims_chol}
-    mark_unsolved(ax3, dims_chol, chols, sub_metrics, color, style["marker"])
+    # 3. Unsolved Markers
+    mark_unsolved_markers(ax3, dims, y_unsolved, color, style["marker"])
 
 ax3.set_xscale("log", base=2)
 ax3.set_yscale("log")
@@ -296,35 +342,22 @@ ax3.grid(True, which="both", linestyle=":", linewidth=0.5)
 # ============================================================
 # Consolidated legend
 # ============================================================
-
-# Create a transparent proxy for the empty slot
 proxy_handle = Line2D([], [], color="none", label="")
 
 def get_h_l(key):
-    """Retrieve handle/label if exists, else return proxy."""
     if key in legend_handles_map:
         return legend_handles_map[key], legend_labels_map[key]
     return proxy_handle, ""
 
-# Get handles for all 5 methods
-h1, l1          = get_h_l((1, "BASE"))
+h1, l1           = get_h_l((1, "BASE"))
 h2_mcm, l2_mcm   = get_h_l((2, "MCMR"))
 h3_mcm, l3_mcm   = get_h_l((3, "MCMR"))
 h2_glrt, l2_glrt = get_h_l((2, "GLRT"))
 h3_glrt, l3_glrt = get_h_l((3, "GLRT"))
 
-# ------------------------------------------------------------------
-# CONSTRUCT LIST FOR ROW-MAJOR FILL (ncol=3)
-# Desired Visual Layout:
-# Col 1: AR1,     Empty
-# Col 2: AR2-MCM, AR2-GLRT
-# Col 3: AR3-MCM, AR3-GLRT
-#
-# Matplotlib fills Row 1 first, then Row 2.
-# Row 1 must contain: [AR1,   AR2-MCM,  AR3-MCM]
-# Row 2 must contain: [Empty, AR2-GLRT, AR3-GLRT]
-# ------------------------------------------------------------------
-
+# Legend Layout: 3 Columns
+# Row 1: AR1,   AR2-MCM,  AR3-MCM
+# Row 2: Empty, AR2-GLRT, AR3-GLRT
 final_handles = [h1, proxy_handle, h2_mcm, h2_glrt, h3_mcm, h3_glrt]
 final_labels  = [l1, "",           l2_mcm, l2_glrt, l3_mcm, l3_glrt]
 
@@ -335,7 +368,7 @@ fig.legend(
     ncol=3, 
     bbox_to_anchor=(0.5, 0.8),
     frameon=True,
-    columnspacing=1.5 # Optional: Adds space between columns for clarity
+    columnspacing=1.5
 )
 
 fig.tight_layout(rect=(0, 0, 1, 0.8))
