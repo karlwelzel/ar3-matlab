@@ -132,40 +132,30 @@ def download_run_summaries(groups: list[str]) -> dict[str, pandas.DataFrame]:
 
 def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
     # Prepare cache file for all relevant runs
-    cache_file = pathlib.Path(" ".join(groups) + "_cache.bin")
-    if cache_file.exists():
-        with open(cache_file, "rb") as f:
-            histories = pickle.load(f)
-    else:
-        # api = wandb.Api(timeout=10000) # avoiding timeout for the first download
-        api = wandb.Api()
-        wandb_runs = api.runs(
-            path="ar3-project/all_experiments",
-            filters={"$or": [{"group": group} for group in groups]},
-        )
-
-        histories = dict()
-        for j, wandb_run in enumerate(wandb_runs):
-            histories[wandb_run.name] = wandb_run.history(samples=5000, pandas=True)
-            print(f"{j+1}/{len(wandb_runs)}")
-
-        with open(cache_file, "wb") as f:
-            pickle.dump(histories, f)
-
-    return histories
-
-
-def merge_histories_from_files(groups: list[str]) -> dict[str, Any]:
     histories = dict()
     for group in groups:
-        cache_file = pathlib.Path(f"{group}_cache.bin")
-        if not cache_file.exists():
-            raise FileNotFoundError(
-                f"Cache file for group '{group}' not found: {cache_file}"
+        cache_file = pathlib.Path(group + "_cache.bin")
+        if cache_file.exists():
+            with open(cache_file, "rb") as f:
+                group_histories = pickle.load(f)
+        else:
+            # api = wandb.Api(timeout=10000) # avoiding timeout for the first download
+            api = wandb.Api()
+            wandb_runs = api.runs(
+                path="ar3-project/all_experiments",
+                filters={"$or": [{"group": group} for group in groups]},
             )
-        with open(cache_file, "rb") as f:
-            group_histories = pickle.load(f)
-            histories.update(group_histories)
+
+            group_histories = dict()
+            for j, wandb_run in enumerate(wandb_runs):
+                group_histories[wandb_run.name] = wandb_run.history(samples=5000, pandas=True)
+                print(f"{j+1}/{len(wandb_runs)}: fetched history for {wandb_run.name}")
+
+            with open(cache_file, "wb") as f:
+                pickle.dump(group_histories, f)
+
+        histories.update(group_histories)
+
     return histories
 
 
