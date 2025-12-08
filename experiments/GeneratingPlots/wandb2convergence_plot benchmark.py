@@ -1,14 +1,14 @@
 import wandb
 import json
 import os
-from wandb_tools import merge_histories_from_files
+from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import convergence_dot_plot
 from wandb_tools import set_plot_asthetics
 
 
 groups = ["Exp_Benchmark_0", "Exp_Benchmark_3"]
-histories = merge_histories_from_files(groups)
+histories = cache_run_histories(groups)
 
 # Filter runs
 api = wandb.Api(timeout=10000)
