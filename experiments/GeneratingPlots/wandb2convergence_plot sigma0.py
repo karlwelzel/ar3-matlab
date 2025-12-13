@@ -1,11 +1,17 @@
 import wandb
 import json
 import os
+import sys
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import convergence_dot_plot
 from wandb_tools import set_plot_asthetics
 
+
+if "--png" in sys.argv:
+    format = "png"
+else:
+    format = "pgf"
 
 inner_stop_rule = "First_Order"
 
@@ -92,6 +98,6 @@ grid = convergence_dot_plot(
 )
 
 os.makedirs("sigma0", exist_ok=True)
-filename = f"sigma0/convergence {inner_stop_rule}.pgf"
+filename = f"sigma0/convergence {inner_stop_rule}.{format}"
 grid.figure.savefig(filename)
 print(f"Saved {filename!r}")

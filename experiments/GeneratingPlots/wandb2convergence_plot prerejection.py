@@ -1,10 +1,16 @@
 import wandb
 import json
 import os
+import sys
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import convergence_dot_plot
 from wandb_tools import set_plot_asthetics
+
+if "--png" in sys.argv:
+    format = "png"
+else:
+    format = "pgf"
 
 for inner_stop_rule in ["First_Order", "ARP_Theory"]:
     histories = cache_run_histories(["Exp_Benchmark_0"])
@@ -94,6 +100,6 @@ for inner_stop_rule in ["First_Order", "ARP_Theory"]:
     )
 
     os.makedirs("prerejection", exist_ok=True)
-    filename = f"prerejection/convergence {inner_stop_rule}.pgf"
+    filename = f"prerejection/convergence {inner_stop_rule}.{format}"
     grid.figure.savefig(filename, dpi=100)
     print(f"Saved {filename!r}")
