@@ -1,6 +1,7 @@
 import wandb
 import json
 import os
+import sys
 from wandb_tools import cache_run_histories
 from wandb_tools import categorize_runs
 from wandb_tools import generate_gpp_plots
@@ -88,5 +89,5 @@ generate_gpp_plots(
     filename_prefix=filename_prefix,
     categorized_runs=categorized_runs,
     new_labels=new_labels,
-    format="pgf",
+    format="png" if "--png" in sys.argv else "pgf",
 )

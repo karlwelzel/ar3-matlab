@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
@@ -10,6 +11,12 @@ import wandb
 from wandb_tools import download_run_summaries
 from wandb_tools import categorize_runs
 from wandb_tools import set_plot_asthetics
+
+
+if "--png" in sys.argv:
+    format = "png"
+else:
+    format = "pgf"
 
 
 # ============================================================
@@ -376,8 +383,8 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
     os.makedirs("GLRT", exist_ok=True)
 
     if "Exp_Benchmark_9" in GROUPS:
-        filename = "GLRT/rosenbrock_time_hvp_chol_vs_dim_log2.pgf"
+        filename = f"GLRT/rosenbrock_time_hvp_chol_vs_dim_log2.{format}"
     elif "Exp_Benchmark_11" in GROUPS:
-        filename = "GLRT/rosenbrock_time_hvp_chol_vs_dim_log2_innertheta10.pgf"
+        filename = f"GLRT/rosenbrock_time_hvp_chol_vs_dim_log2_innertheta10.{format}"
     fig.savefig(filename)
     print(f"Saved {filename!r}")

@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 import dataclasses
 import enum
@@ -242,15 +243,18 @@ def set_plot_asthetics():
     )
     plt.rc("text", usetex=True)
     plt.rc("font", family="serif", serif="Computer Modern Roman")
-    plt.rc("lines", markersize=1.5, linewidth=1)
+    plt.rc("lines", markersize=2.0, linewidth=1)
     plt.rc("savefig", dpi=300)
 
-    # Change default sizes, "large" -> "medium" and "medium" -> "small"
-    plt.rc("axes", titlesize="medium", labelsize="small")
-    plt.rc("xtick", labelsize="small")
-    plt.rc("ytick", labelsize="small")
-    plt.rc("legend", fontsize="small")
-    plt.rc("figure", titlesize="medium")
+    if "--mpc" in sys.argv:
+        plt.rc("lines", markersize=1.5)
+
+        # Change default sizes, "large" -> "medium" and "medium" -> "small"
+        plt.rc("axes", titlesize="medium", labelsize="small")
+        plt.rc("xtick", labelsize="small")
+        plt.rc("ytick", labelsize="small")
+        plt.rc("legend", fontsize="small")
+        plt.rc("figure", titlesize="medium")
 
 
 def gpp_plot_title(
@@ -447,11 +451,16 @@ def generate_gpp_plots(
     legend_rows = np.ceil(len(new_labels) / legend_ncols)
     legend_height = 0.5 * legend_rows  # inches
 
+    if "--mpc" in sys.argv:
+        subplot_size = (2.5, 2.5)
+    else:
+        subplot_size = (2.8, 2.5)
+
     # One line for main part of the paper
     figure, axs = plt.subplots(
         nrows=1,
         ncols=len(cost_measures),
-        figsize=(2.5 * len(cost_measures), 2.5 + legend_height),
+        figsize=(subplot_size[0] * len(cost_measures), subplot_size[1] + legend_height),
         squeeze=False,
     )
 
@@ -475,13 +484,20 @@ def generate_gpp_plots(
     figure.savefig(filename)
     print(f"Saved {filename!r}")
 
+    if "--mpc" in sys.argv:
+        linewidth = 0.5
+        subplot_size = (1.5, 1.3)
+    else:
+        linewidth = 0.75
+        subplot_size = (2.0, 1.7)
+
     with plt.rc_context(
         {
             "font.size": 6,
             "lines.linewidth": 0.75,
-            "axes.linewidth": 0.5,
-            "xtick.major.width": 0.5,
-            "ytick.major.width": 0.5,
+            "axes.linewidth": linewidth,
+            "xtick.major.width": linewidth,
+            "ytick.major.width": linewidth,
         }
     ):
         legend_rows = np.ceil(len(new_labels) / legend_ncols)
@@ -492,13 +508,14 @@ def generate_gpp_plots(
             figure, axs = plt.subplots(
                 nrows=num_tolerances,
                 ncols=len(cost_measures),
-                figsize=(1.5 * len(cost_measures), 1.3 * num_tolerances + legend_height),
+                figsize=(subplot_size[0] * len(cost_measures), subplot_size[1] * num_tolerances + legend_height),
                 squeeze=False,
             )
 
             for i, cost_measure in enumerate(cost_measures):
                 for j, tolerance in enumerate(tolerances[tolerance_measure]):
-                    axs[j][i].tick_params(axis="y", pad=-1)
+                    if "--mpc" in sys.argv:
+                        axs[j][i].tick_params(axis="y", pad=-1)
                     gpp_tau_plot(
                         ax=axs[j][i],
                         categorized_runs=categorized_runs,
@@ -527,13 +544,13 @@ def generate_gpp_plots(
             figure, axs = plt.subplots(
                 nrows=len(taus),
                 ncols=len(cost_measures),
-                figsize=(1.5 * len(cost_measures), 1.3 * len(taus) + legend_height),
-                squeeze=False,
+                figsize=(subplot_size[0] * len(cost_measures), subplot_size[1] * len(taus) + legend_height),
             )
 
             for i, cost_measure in enumerate(cost_measures):
                 for j, tau in enumerate(taus):
-                    axs[j][i].tick_params(axis="y", pad=-1)
+                    if "--mpc" in sys.argv:
+                        axs[j][i].tick_params(axis="y", pad=-1)
                     gpp_eps_plot(
                         ax=axs[j][i],
                         categorized_runs=categorized_runs,
@@ -625,6 +642,12 @@ def convergence_dot_plot(
         Evals.FINAL.value: dark_color,
     }
 
+    if "--mpc" in sys.argv:
+        subplot_size = (1.5, 1.7)
+    else:
+        subplot_size = (1.7, 2.3)
+
+
     grid = sns.relplot(
         data=data,
         x="f",
@@ -668,8 +691,8 @@ def convergence_dot_plot(
     if legend_loc == "top":
         legend_height = 0.4 * (len(Evals) / (legend_ncols or len(Evals)))  # inches
         grid.figure.set_size_inches(
-            len(grid.col_names) * 1.5 * fig_scale,
-            len(grid.row_names) * 1.7 * fig_scale + legend_height,
+            len(grid.col_names) * subplot_size[0] * fig_scale,
+            len(grid.row_names) * subplot_size[1] * fig_scale + legend_height,
         )
         height_ratio = legend_height / grid.figure.get_figheight()
         extra_ratio = 0.05 if col_titles is not None and "\n" in col_titles[0] else 0
@@ -686,10 +709,10 @@ def convergence_dot_plot(
             markerscale=2,
         )
     elif legend_loc == "left":
-        legend_width = 2  # inches
+        legend_width = 1.6 if "--mpc" in sys.argv else 2  # inches
         grid.figure.set_size_inches(
-            len(grid.col_names) * 1.7 + legend_width,
-            len(grid.row_names) * 1.7,
+            len(grid.col_names) * subplot_size[0] + legend_width,
+            len(grid.row_names) * subplot_size[1],
         )
         width_ratio = legend_width / grid.figure.get_figwidth()
         grid.figure.tight_layout(pad=0.5, rect=(width_ratio, 0, 1, 1))

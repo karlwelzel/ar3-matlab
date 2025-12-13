@@ -1,3 +1,4 @@
+import sys
 import matplotlib.pyplot
 import numpy as np
 import pandas as pd
@@ -136,6 +137,16 @@ print("calculations done")
 
 set_plot_asthetics()
 
+if "--mpc" in sys.argv:
+    figsize = (4, 1.2)
+else:
+    figsize = (6, 1.8)
+
+if "--png" in sys.argv:
+    format = "png"
+else:
+    format = "pdf"
+
 # There is a bug in the way PGF does clipping of filled paths
 matplotlib.pyplot.switch_backend("pdf")
 
@@ -200,10 +211,7 @@ colorbar = grid.figure.colorbar(
 )
 
 grid.set(xscale="log", yscale="log")
-grid.figure.set_figwidth(4)
-grid.figure.set_figheight(1.2)
-# grid.savefig("local_minimizer_discontinuity.png", dpi=300)
-# grid.savefig("local_minimizer_discontinuity.pgf")
-grid.savefig("local_minimizer_discontinuity.pdf")
+grid.figure.set_size_inches(figsize)
+grid.savefig(f"local_minimizer_discontinuity.{format}")
 
 print("saving done")

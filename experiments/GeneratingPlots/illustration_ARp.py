@@ -1,4 +1,5 @@
 import os
+import sys
 from itertools import groupby
 from typing import Any
 import matplotlib.pyplot as plt
@@ -6,6 +7,17 @@ import numpy as np
 from wandb_tools import set_plot_asthetics
 
 set_plot_asthetics()
+
+if "--mpc" in sys.argv:
+    figsize = (3.8, 1.8)
+else:
+    figsize = (4, 2.5)
+
+if "--png" in sys.argv:
+    format = "png"
+else:
+    format = "pgf"
+
 
 functions = [
     np.poly1d([3, -10, 12, -5, 0]),
@@ -42,7 +54,7 @@ for p in [2, 3]:
                             alpha
                         ) ** (p + 1)
 
-            fig, ax = plt.subplots(figsize=(3.8, 1.8), layout="tight")
+            fig, ax = plt.subplots(figsize=figsize, layout="tight")
             ax.spines["left"].set_position("zero")
             ax.spines["bottom"].set_position("zero")
             ax.spines["right"].set_color("none")
@@ -126,7 +138,7 @@ for p in [2, 3]:
 
             os.makedirs("illustration", exist_ok=True)
             filename = (
-                f"illustration/AR{p} func{i}" + (" relaxed" if relaxed else "") + ".pgf"
+                f"illustration/AR{p} func{i}" + (" relaxed" if relaxed else "") + f".{format}"
             )
             fig.savefig(filename)
             print(f"Saved {filename}")
