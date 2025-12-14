@@ -1,13 +1,14 @@
-import wandb
 import json
 import os
 import sys
 
-from wandb_tools import cache_run_histories
-from wandb_tools import categorize_runs
-from wandb_tools import generate_gpp_plots
-from wandb_tools import set_plot_asthetics
-
+import wandb
+from wandb_tools import (
+    cache_run_histories,
+    categorize_runs,
+    generate_gpp_plots,
+    set_plot_asthetics,
+)
 
 # -------------------------------
 # User choices
@@ -134,10 +135,7 @@ for method in categorized_runs.sorted_methods:
         raise ValueError(f"Unknown method: {method}")
 
     # Rename solver label (MCMR -> MCM)
-    if solver == "MCMR":
-        solver_label = "MCM"
-    else:
-        solver_label = solver
+    solver_label = "MCM" if solver == "MCMR" else solver
 
     # Select accuracy labels (same meaning for p=2 and p=3)
     if stop_rule == "First_Order":

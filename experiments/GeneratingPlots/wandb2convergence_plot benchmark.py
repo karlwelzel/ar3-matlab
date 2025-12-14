@@ -1,16 +1,16 @@
-import wandb
 import json
 import os
 import sys
-from wandb_tools import cache_run_histories
-from wandb_tools import categorize_runs
-from wandb_tools import convergence_dot_plot
-from wandb_tools import set_plot_asthetics
 
-if "--png" in sys.argv:
-    format = "png"
-else:
-    format = "pgf"
+import wandb
+from wandb_tools import (
+    cache_run_histories,
+    categorize_runs,
+    convergence_dot_plot,
+    set_plot_asthetics,
+)
+
+format = "png" if "--png" in sys.argv else "pgf"
 
 groups = ["Exp_Benchmark_0", "Exp_Benchmark_3"]
 histories = cache_run_histories(groups)

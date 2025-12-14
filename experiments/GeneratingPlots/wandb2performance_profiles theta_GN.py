@@ -1,11 +1,14 @@
-import wandb
 import json
 import os
 import sys
-from wandb_tools import cache_run_histories
-from wandb_tools import categorize_runs
-from wandb_tools import generate_gpp_plots
-from wandb_tools import set_plot_asthetics
+
+import wandb
+from wandb_tools import (
+    cache_run_histories,
+    categorize_runs,
+    generate_gpp_plots,
+    set_plot_asthetics,
+)
 
 histories = cache_run_histories(["Exp_Benchmark_6"])
 
@@ -70,36 +73,36 @@ for p in [2, 3]:
         legend_ncols = 2
         custom_titles = [
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
         ]
     else:
         legend_ncols = None  # default
         custom_titles = [
             r"\textsf{AR$3$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
         ]
 
     os.makedirs("theta_GN", exist_ok=True)
