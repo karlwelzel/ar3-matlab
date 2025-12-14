@@ -1,16 +1,16 @@
-import wandb
 import json
 import os
 import sys
-from wandb_tools import cache_run_histories
-from wandb_tools import categorize_runs
-from wandb_tools import convergence_dot_plot
-from wandb_tools import set_plot_asthetics
 
-if "--png" in sys.argv:
-    format = "png"
-else:
-    format = "pgf"
+import wandb
+from wandb_tools import (
+    cache_run_histories,
+    categorize_runs,
+    convergence_dot_plot,
+    set_plot_asthetics,
+)
+
+format = "png" if "--png" in sys.argv else "pgf"
 
 histories = cache_run_histories(["Exp_Benchmark_6"])
 
@@ -84,14 +84,14 @@ for p in [2, 3]:
         legend_ncols = 2
         custom_titles = [
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^2$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^2$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^2$",
         ]
 
         grid = convergence_dot_plot(
@@ -106,23 +106,23 @@ for p in [2, 3]:
         legend_ncols = None  # default
         custom_titles = [
             r"\textsf{AR$3$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^0 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^2 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla t_k\| \leq 10^4 \sigma_k \|\mathbf{s}\|^3$",
         ]
 
         grid = convergence_dot_plot(

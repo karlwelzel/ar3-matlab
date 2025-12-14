@@ -1,18 +1,19 @@
-import sys
-from collections import defaultdict
 import dataclasses
 import enum
 import json
+import pathlib
+import pickle
+import sys
+from collections import defaultdict
+from typing import Any, Callable, Literal
+
 import matplotlib.axes
 import matplotlib.collections
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas
-import pathlib
-import pickle
+import pandas as pd
 import seaborn as sns
-from typing import Any, Callable, Literal
 import wandb
 
 
@@ -35,7 +36,7 @@ class PlotType(enum.Enum):
 
 @dataclasses.dataclass
 class CategorizedRun:
-    history: pandas.DataFrame
+    history: pd.DataFrame
     method: str
     problem: str
     problem_setup: str
@@ -63,10 +64,12 @@ class CategorizedRuns(list[CategorizedRun]):
 def split_config(
     config: dict[str, Any],
     method_parameters: list[str],
-    ignore: list[str] = [],
+    ignore: list[str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    method_config = dict()
-    problem_setup_config = dict()
+    if ignore is None:
+        ignore = []
+    method_config = {}
+    problem_setup_config = {}
     for key, value in config.items():
         if key in method_parameters:
             method_config[key] = value
@@ -80,10 +83,10 @@ def split_config(
 
 def categorize_runs(
     wandb_runs,
-    histories: dict[str, pandas.DataFrame],
+    histories: dict[str, pd.DataFrame],
     method_parameters: list[str],
     dump_type: str = "gpp",
-    ignore: list[str] = [],
+    ignore: list[str] | None = None,
     method_sort_key: Callable[[str], Any] | None = None,
     error_on_duplicate=False,
 ) -> CategorizedRuns:
@@ -114,30 +117,30 @@ def categorize_runs(
     return categorized_runs
 
 
-def download_run_summaries(groups: list[str]) -> dict[str, pandas.DataFrame]:
+def download_run_summaries(groups: list[str]) -> dict[str, pd.DataFrame]:
     api = wandb.Api()
     wandb_runs = api.runs(
         path="ar3-project/all_experiments",
         filters={"$or": [{"group": group} for group in groups]},
     )
 
-    summaries: dict[str, pandas.DataFrame] = {}
+    summaries: dict[str, pd.DataFrame] = {}
 
     for j, wandb_run in enumerate(wandb_runs):
         summary_dict = dict(wandb_run.summary)
-        summaries[wandb_run.name] = pandas.DataFrame([summary_dict])
-        print(f"{j+1}/{len(wandb_runs)}: fetched summary for {wandb_run.name}")
+        summaries[wandb_run.name] = pd.DataFrame([summary_dict])
+        print(f"{j + 1}/{len(wandb_runs)}: fetched summary for {wandb_run.name}")
 
     return summaries
 
 
-def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
+def cache_run_histories(groups: list[str]) -> dict[str, pd.DataFrame]:
     # Prepare cache file for all relevant runs
-    histories = dict()
+    histories = {}
     for group in groups:
         cache_file = pathlib.Path(group + "_cache.bin")
         if cache_file.exists():
-            with open(cache_file, "rb") as f:
+            with cache_file.open(mode="rb") as f:
                 group_histories = pickle.load(f)
         else:
             # api = wandb.Api(timeout=10000) # avoiding timeout for the first download
@@ -147,12 +150,16 @@ def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
                 filters={"$or": [{"group": group} for group in groups]},
             )
 
-            group_histories = dict()
+            group_histories = {}
             for j, wandb_run in enumerate(wandb_runs):
-                group_histories[wandb_run.name] = wandb_run.history(samples=5000, pandas=True)
-                print(f"{j+1}/{len(wandb_runs)}: fetched history for {wandb_run.name}")
+                group_histories[wandb_run.name] = wandb_run.history(
+                    samples=5000, pandas=True
+                )
+                print(
+                    f"{j + 1}/{len(wandb_runs)}: fetched history for {wandb_run.name}"
+                )
 
-            with open(cache_file, "wb") as f:
+            with cache_file.open(mode="wb") as f:
                 pickle.dump(group_histories, f)
 
         histories.update(group_histories)
@@ -162,9 +169,12 @@ def cache_run_histories(groups: list[str]) -> dict[str, pandas.DataFrame]:
 
 # functions for performance profiles
 def gpp_dumps(method_config, problem_setup_config):
-    method, problem_setup = json.dumps(method_config), json.dumps(
-        problem_setup_config,
-        sort_keys=True,
+    method, problem_setup = (
+        json.dumps(method_config),
+        json.dumps(
+            problem_setup_config,
+            sort_keys=True,
+        ),
     )
     return method, problem_setup
 
@@ -174,18 +184,18 @@ def gpp_costs(
     cost_measure: str,
     tolerance_measure: ToleranceMeasure,
     tolerance: float,
-) -> pandas.DataFrame:
+) -> pd.DataFrame:
     if tolerance_measure == ToleranceMeasure.FUNCTION_VALUE:
         f_best = defaultdict(lambda: np.inf)
-        f_ini = dict()
-        norm_g_ini = dict()
+        f_ini = {}
+        norm_g_ini = {}
         for run in categorized_runs:
             run_f_best = np.min(run.history["f"])
             f_best[run.problem] = min(run_f_best, f_best[run.problem])
             f_ini[run.problem] = run.history["f"][0]
             norm_g_ini[run.problem] = run.history["norm_g"][0]
 
-    costs = pandas.DataFrame(
+    costs = pd.DataFrame(
         index=categorized_runs.sorted_methods,
         columns=sorted(categorized_runs.all_problem_setups),
         dtype=np.float64,
@@ -220,8 +230,7 @@ def gpp_costs(
         )
         raise RuntimeError(
             "A combination of method and problem setup is missing. "
-            + "Consider ignoring the following keys: "
-            + str(conflicting_keys)
+            "Consider ignoring the following keys: " + str(conflicting_keys)
         )
 
     return costs
@@ -271,9 +280,12 @@ def gpp_plot_title(
     }[cost_measure]
 
     if plot_type == PlotType.TAU_PLOT:
-        tolerance_exponent = int(round(np.log10(tolerance)))
-        return rf"{measure_label} ($\varepsilon_{tolerance_measure.value} = 10^{{{tolerance_exponent}}}$)"
-    elif plot_type == PlotType.EPS_PLOT:
+        tolerance_exponent = round(np.log10(tolerance))
+        return (
+            rf"{measure_label} ($\varepsilon_{tolerance_measure.value} ="
+            rf" 10^{{{tolerance_exponent}}}$)"
+        )
+    if plot_type == PlotType.EPS_PLOT:
         if tolerance == float("inf"):
             tau_str = r"\infty"
         elif tolerance == int(tolerance):
@@ -293,7 +305,7 @@ def gpp_tau_plot(
     taus,
     new_labels: list[str] | None = None,
 ) -> matplotlib.axes.Axes:
-    pp_curves = pandas.DataFrame(
+    pp_curves = pd.DataFrame(
         index=taus,
         columns=categorized_runs.sorted_methods,
         dtype=np.float64,
@@ -348,7 +360,7 @@ def gpp_eps_plot(
     tau: float,
     new_labels: list[str] | None = None,
 ) -> matplotlib.axes.Axes:
-    pp_curves = pandas.DataFrame(
+    pp_curves = pd.DataFrame(
         index=tolerances,
         columns=categorized_runs.sorted_methods,
         dtype=np.float64,
@@ -451,10 +463,7 @@ def generate_gpp_plots(
     legend_rows = np.ceil(len(new_labels) / legend_ncols)
     legend_height = 0.5 * legend_rows  # inches
 
-    if "--mpc" in sys.argv:
-        subplot_size = (2.5, 2.5)
-    else:
-        subplot_size = (2.8, 2.5)
+    subplot_size = (2.5, 2.5) if "--mpc" in sys.argv else (2.8, 2.5)
 
     # One line for main part of the paper
     figure, axs = plt.subplots(
@@ -508,7 +517,10 @@ def generate_gpp_plots(
             figure, axs = plt.subplots(
                 nrows=num_tolerances,
                 ncols=len(cost_measures),
-                figsize=(subplot_size[0] * len(cost_measures), subplot_size[1] * num_tolerances + legend_height),
+                figsize=(
+                    subplot_size[0] * len(cost_measures),
+                    subplot_size[1] * num_tolerances + legend_height,
+                ),
                 squeeze=False,
             )
 
@@ -544,7 +556,10 @@ def generate_gpp_plots(
             figure, axs = plt.subplots(
                 nrows=len(taus),
                 ncols=len(cost_measures),
-                figsize=(subplot_size[0] * len(cost_measures), subplot_size[1] * len(taus) + legend_height),
+                figsize=(
+                    subplot_size[0] * len(cost_measures),
+                    subplot_size[1] * len(taus) + legend_height,
+                ),
             )
 
             for i, cost_measure in enumerate(cost_measures):
@@ -571,9 +586,12 @@ def generate_gpp_plots(
 
 # functions for convergence dot plots
 def gcp_dumps(method_config, problem_setup_config):
-    method, problem_setup = json.dumps(list(method_config.values())), json.dumps(
-        problem_setup_config,
-        sort_keys=True,
+    method, problem_setup = (
+        json.dumps(list(method_config.values())),
+        json.dumps(
+            problem_setup_config,
+            sort_keys=True,
+        ),
     )
     return method, problem_setup
 
@@ -581,12 +599,11 @@ def gcp_dumps(method_config, problem_setup_config):
 def objective_evaluations(history, i):
     if i + 1 == len(history):
         return Evals.FINAL.value
-    elif history.loc[i + 1, "total_fun"] == history.loc[i, "total_fun"]:
+    if history.loc[i + 1, "total_fun"] == history.loc[i, "total_fun"]:
         return Evals.NONE.value
-    elif history.loc[i + 1, "total_der"] == history.loc[i, "total_der"]:
+    if history.loc[i + 1, "total_der"] == history.loc[i, "total_der"]:
         return Evals.FUN.value
-    else:
-        return Evals.FUN_AND_DER.value
+    return Evals.FUN_AND_DER.value
 
 
 def convergence_dot_plot(
@@ -594,7 +611,7 @@ def convergence_dot_plot(
     col_titles: list[str] | None = None,
     legend_ncols: int | None = None,
     fig_scale: float = 1,
-    legend_loc: Literal["top"] | Literal["left"] = "top",
+    legend_loc: Literal["top", "left"] = "top",
     **kwargs,
 ):
     f_best = defaultdict(lambda: np.inf)
@@ -609,7 +626,7 @@ def convergence_dot_plot(
     f_best["5"] = np.float64(0)
     f_best["13"] = np.float64(0)
 
-    data = pandas.DataFrame(
+    data = pd.DataFrame(
         data=[
             {
                 "sigma": max(float(run.history.loc[i, "sigma"]), 1e-10),
@@ -642,11 +659,7 @@ def convergence_dot_plot(
         Evals.FINAL.value: dark_color,
     }
 
-    if "--mpc" in sys.argv:
-        subplot_size = (1.5, 1.7)
-    else:
-        subplot_size = (1.7, 2.3)
-
+    subplot_size = (1.5, 1.7) if "--mpc" in sys.argv else (1.7, 2.3)
 
     grid = sns.relplot(
         data=data,

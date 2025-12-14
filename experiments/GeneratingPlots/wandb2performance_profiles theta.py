@@ -1,11 +1,14 @@
-import wandb
 import json
 import os
 import sys
-from wandb_tools import cache_run_histories
-from wandb_tools import categorize_runs
-from wandb_tools import generate_gpp_plots
-from wandb_tools import set_plot_asthetics
+
+import wandb
+from wandb_tools import (
+    cache_run_histories,
+    categorize_runs,
+    generate_gpp_plots,
+    set_plot_asthetics,
+)
 
 histories = cache_run_histories(["Exp_Benchmark_0"])
 
@@ -71,35 +74,35 @@ for p in [2, 3]:
         custom_titles = [
             r"\textsf{AR$2$-Interp}" + "\n" + r"$\|\nabla m_k\| \leq 10^{-9}$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^2$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^2$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^2$",
             r"\textsf{AR$2$-Interp}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^2$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^2$",
         ]
     else:
         custom_titles = [
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^{-9}$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^{-9}$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^{-2} \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^0 \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^2 \|\mathbf{s}\|^3$",
             r"\textsf{AR$3$-Interp\textsuperscript{+}}"
-            + "\n"
-            + r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^3$",
+            "\n"
+            r"$\|\nabla m_k\| \leq 10^4 \|\mathbf{s}\|^3$",
         ]
 
     os.makedirs("theta", exist_ok=True)

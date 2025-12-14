@@ -4,19 +4,12 @@ import sys
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import numpy as np
 import wandb
+from matplotlib.lines import Line2D
+from wandb_tools import categorize_runs, download_run_summaries, set_plot_asthetics
 
-from wandb_tools import download_run_summaries
-from wandb_tools import categorize_runs
-from wandb_tools import set_plot_asthetics
-
-
-if "--png" in sys.argv:
-    format = "png"
-else:
-    format = "pgf"
+format = "png" if "--png" in sys.argv else "pgf"
 
 
 # ============================================================
@@ -36,11 +29,11 @@ STYLE_BY_METHOD = {
 
 # Desired ordering of methods in plotting
 ORDER_INDEX = {
-    (1, "BASE"): 0,   # AR1
-    (2, "MCMR"): 1,   # AR2 + MCMR
-    (2, "GLRT"): 2,   # AR2 + GLRT
-    (3, "MCMR"): 3,   # AR3 + MCMR
-    (3, "GLRT"): 4,   # AR3 + GLRT
+    (1, "BASE"): 0,  # AR1
+    (2, "MCMR"): 1,  # AR2 + MCMR
+    (2, "GLRT"): 2,  # AR2 + GLRT
+    (3, "MCMR"): 3,  # AR3 + MCMR
+    (3, "GLRT"): 4,  # AR3 + GLRT
 }
 
 
@@ -103,7 +96,7 @@ def separate_solved_unsolved(dims, y_vals, metrics_for_dim):
     y_solved = []
     y_unsolved = []
 
-    for d, y in zip(dims, y_vals):
+    for d, y in zip(dims, y_vals, strict=True):
         g = metrics_for_dim[d].get("norm_g")
 
         # Check if Unsolved
@@ -127,12 +120,12 @@ def mark_unsolved_markers(ax, dims, y_unsolved, color, marker_shape):
     ax.plot(
         dims,
         y_unsolved,
-        linestyle="None",       # No line, just markers
+        linestyle="None",  # No line, just markers
         marker=marker_shape,
         markersize=6,
-        markerfacecolor="none", # Hollow
+        markerfacecolor="none",  # Hollow
         markeredgecolor=color,
-        zorder=10               # On top of everything
+        zorder=10,  # On top of everything
     )
 
 
@@ -157,16 +150,24 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
         histories=summaries,
         method_parameters=method_parameters,
         ignore=[
-            "wandb_project", "wandb_group", "update_use_prerejection", "stop_tolerance_g",
-            "stop_rule", "update_type", "inner_stop_rule", "inner_stop_theta",
-            "inner_stop_tolerance_g", "inner_inner_stop_tolerance_g",
-            "inner_update_type", "inner_update_decrease_measure",
-            "inner_inner_stop_rule", "update_sigma0",
+            "wandb_project",
+            "wandb_group",
+            "update_use_prerejection",
+            "stop_tolerance_g",
+            "stop_rule",
+            "update_type",
+            "inner_stop_rule",
+            "inner_stop_theta",
+            "inner_stop_tolerance_g",
+            "inner_inner_stop_tolerance_g",
+            "inner_update_type",
+            "inner_update_decrease_measure",
+            "inner_inner_stop_rule",
+            "update_sigma0",
         ],
         method_sort_key=method_sort_key,
         error_on_duplicate=True,
     )
-
 
     # ============================================================
     # Aggregate final metrics
@@ -197,7 +198,6 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
                 "norm_g": norm_g_val,
             }
 
-
     # ============================================================
     # Plot setup
     # ============================================================
@@ -214,7 +214,6 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
     exponents = range(2, 16, 2)
     custom_ticks = [2**e for e in exponents]
     custom_labels = [rf"$2^{{{e}}}$" for e in exponents]
-
 
     # ============================================================
     # Plot 1: Time vs dimension
@@ -233,9 +232,15 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
 
         # 1. Light Line (Ghost): Connects everything (including unsolved)
         #    alpha=0.3 makes it lighter. marker=None prevents double markers.
-        ax1.plot(dims, times,
-                color=style["color"], linestyle=style["linestyle"],
-                marker=None, alpha=0.3, zorder=1)
+        ax1.plot(
+            dims,
+            times,
+            color=style["color"],
+            linestyle=style["linestyle"],
+            marker=None,
+            alpha=0.3,
+            zorder=1,
+        )
 
         # 2. Main Line (Solved): Only solved segments
         (line,) = ax1.plot(dims, y_solved, label=label, **style, zorder=2)
@@ -257,14 +262,14 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
     ax1.set_title("Time vs dimension")
     ax1.grid(True, which="both", linestyle=":", linewidth=0.5)
 
-
     # ============================================================
     # Plot 2: HVP vs dimension
     # ============================================================
     for (p_val, solver), dim_metrics in sorted(
         method_to_dim_metrics.items(), key=lambda kv: ORDER_INDEX[kv[0]]
     ):
-        if solver != "GLRT": continue
+        if solver != "GLRT":
+            continue
 
         dims = sorted(dim_metrics.keys())
         dims_hvp, hvps = [], []
@@ -273,7 +278,8 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
             if v is not None and v > 0:
                 dims_hvp.append(d)
                 hvps.append(v)
-        if not dims_hvp: continue
+        if not dims_hvp:
+            continue
 
         y_solved, y_unsolved = separate_solved_unsolved(dims, hvps, dim_metrics)
 
@@ -281,9 +287,15 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
         style = STYLE_BY_METHOD[(p_val, solver)]
 
         # 1. Light Line
-        ax2.plot(dims, hvps,
-                color=style["color"], linestyle=style["linestyle"],
-                marker=None, alpha=0.3, zorder=1)
+        ax2.plot(
+            dims,
+            hvps,
+            color=style["color"],
+            linestyle=style["linestyle"],
+            marker=None,
+            alpha=0.3,
+            zorder=1,
+        )
 
         # 2. Main Line
         (line,) = ax2.plot(dims, y_solved, label=label, **style, zorder=2)
@@ -301,14 +313,14 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
     ax2.set_title("HVPs (GLRT) vs dimension")
     ax2.grid(True, which="both", linestyle=":", linewidth=0.5)
 
-
     # ============================================================
     # Plot 3: Cholesky vs dimension
     # ============================================================
     for (p_val, solver), dim_metrics in sorted(
         method_to_dim_metrics.items(), key=lambda kv: ORDER_INDEX[kv[0]]
     ):
-        if solver != "MCMR": continue
+        if solver != "MCMR":
+            continue
 
         dims = sorted(dim_metrics.keys())
         dims_chol, chols = [], []
@@ -317,7 +329,8 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
             if v is not None and v > 0:
                 dims_chol.append(d)
                 chols.append(v)
-        if not dims_chol: continue
+        if not dims_chol:
+            continue
 
         y_solved, y_unsolved = separate_solved_unsolved(dims, chols, dim_metrics)
 
@@ -325,9 +338,15 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
         style = STYLE_BY_METHOD[(p_val, solver)]
 
         # 1. Light Line
-        ax3.plot(dims, chols,
-                color=style["color"], linestyle=style["linestyle"],
-                marker=None, alpha=0.3, zorder=1)
+        ax3.plot(
+            dims,
+            chols,
+            color=style["color"],
+            linestyle=style["linestyle"],
+            marker=None,
+            alpha=0.3,
+            zorder=1,
+        )
 
         # 2. Main Line
         (line,) = ax3.plot(dims, y_solved, label=label, **style, zorder=2)
@@ -345,7 +364,6 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
     ax3.set_title("Cholesky (MCM) vs dimension")
     ax3.grid(True, which="both", linestyle=":", linewidth=0.5)
 
-
     # ============================================================
     # Consolidated legend
     # ============================================================
@@ -356,9 +374,9 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
             return legend_handles_map[key], legend_labels_map[key]
         return proxy_handle, ""
 
-    h1, l1           = get_h_l((1, "BASE"))
-    h2_mcm, l2_mcm   = get_h_l((2, "MCMR"))
-    h3_mcm, l3_mcm   = get_h_l((3, "MCMR"))
+    h1, l1 = get_h_l((1, "BASE"))
+    h2_mcm, l2_mcm = get_h_l((2, "MCMR"))
+    h3_mcm, l3_mcm = get_h_l((3, "MCMR"))
     h2_glrt, l2_glrt = get_h_l((2, "GLRT"))
     h3_glrt, l3_glrt = get_h_l((3, "GLRT"))
 
@@ -366,7 +384,7 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
     # Row 1: AR1,   AR2-MCM,  AR3-MCM
     # Row 2: Empty, AR2-GLRT, AR3-GLRT
     final_handles = [h1, proxy_handle, h2_mcm, h2_glrt, h3_mcm, h3_glrt]
-    final_labels  = [l1, "",           l2_mcm, l2_glrt, l3_mcm, l3_glrt]
+    final_labels = [l1, "", l2_mcm, l2_glrt, l3_mcm, l3_glrt]
 
     fig.legend(
         final_handles,
@@ -375,7 +393,7 @@ for GROUPS in [["Exp_Benchmark_9"], ["Exp_Benchmark_11"]]:
         ncol=3,
         bbox_to_anchor=(0.5, 0.8),
         frameon=True,
-        columnspacing=1.5
+        columnspacing=1.5,
     )
 
     fig.tight_layout(rect=(0, 0, 1, 0.8))

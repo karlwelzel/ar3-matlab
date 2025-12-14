@@ -1,11 +1,14 @@
-import wandb
 import json
 import os
 import sys
-from wandb_tools import cache_run_histories
-from wandb_tools import categorize_runs
-from wandb_tools import generate_gpp_plots
-from wandb_tools import set_plot_asthetics
+
+import wandb
+from wandb_tools import (
+    cache_run_histories,
+    categorize_runs,
+    generate_gpp_plots,
+    set_plot_asthetics,
+)
 
 histories = cache_run_histories(["Exp_Benchmark_6"])
 

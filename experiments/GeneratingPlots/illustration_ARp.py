@@ -2,21 +2,16 @@ import os
 import sys
 from itertools import groupby
 from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
 from wandb_tools import set_plot_asthetics
 
 set_plot_asthetics()
 
-if "--mpc" in sys.argv:
-    figsize = (3.8, 1.8)
-else:
-    figsize = (4, 2.5)
+figsize = (3.8, 1.8) if "--mpc" in sys.argv else (4, 2.5)
 
-if "--png" in sys.argv:
-    format = "png"
-else:
-    format = "pgf"
+format = "png" if "--png" in sys.argv else "pgf"
 
 
 functions = [
@@ -49,10 +44,9 @@ for p in [2, 3]:
     for i, fun in enumerate(functions):
         for relaxed in [False, True]:
             taylor = np.poly1d(fun.coefficients[-p - 1 :])
+
             def model(alpha, sigma):
-                return taylor(alpha) + (sigma / (p + 1)) * abs(
-                            alpha
-                        ) ** (p + 1)
+                return taylor(alpha) + (sigma / (p + 1)) * abs(alpha) ** (p + 1)
 
             fig, ax = plt.subplots(figsize=figsize, layout="tight")
             ax.spines["left"].set_position("zero")
@@ -93,14 +87,13 @@ for p in [2, 3]:
 
             # persistent interval
             for j, xi in enumerate(xis):
+
                 def is_minimizer(alpha):
-                    return ((xi - taylor.deriv(1)(alpha)) * np.sign(alpha) >= 0
-                                    and (
-                                        taylor.deriv(2)(alpha) * alpha
-                                        + p * (xi - taylor.deriv(1)(alpha))
-                                    )
-                                    * np.sign(alpha)
-                                    >= 0)
+                    return (xi - taylor.deriv(1)(alpha)) * np.sign(alpha) >= 0 and (
+                        taylor.deriv(2)(alpha) * alpha
+                        + p * (xi - taylor.deriv(1)(alpha))
+                    ) * np.sign(alpha) >= 0
+
                 kwargs_span: dict[str, Any] = {"alpha": 0.16}
                 kwargs_line = {"color": "black", "linestyle": "dotted"}
                 if j == 0:
@@ -138,7 +131,9 @@ for p in [2, 3]:
 
             os.makedirs("illustration", exist_ok=True)
             filename = (
-                f"illustration/AR{p} func{i}" + (" relaxed" if relaxed else "") + f".{format}"
+                f"illustration/AR{p} func{i}"
+                + (" relaxed" if relaxed else "")
+                + f".{format}"
             )
             fig.savefig(filename)
             print(f"Saved {filename}")

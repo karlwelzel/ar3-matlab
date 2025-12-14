@@ -1,18 +1,18 @@
 import sys
+from itertools import pairwise
+from typing import Iterable
+
+import matplotlib
 import matplotlib.pyplot
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from typing import Iterable
-from itertools import pairwise
-import matplotlib
+from matplotlib.axes import Axes
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
-from matplotlib.path import Path
 from matplotlib.lines import Line2D
-from matplotlib.axes import Axes
+from matplotlib.path import Path
 from matplotlib.transforms import Affine2D, TransformedPath
-
 from wandb_tools import set_plot_asthetics
 
 
@@ -85,7 +85,7 @@ def ar2_minimizers(taylor2: np.poly1d, sigmas: Iterable) -> list[dict[str, np.nu
                         "rho": compute_rho(
                             sp.real, np.poly1d(taylor2.coeffs * [1, direction, 1])
                         ),
-                        "global": True if direction == 1 else False,
+                        "global": direction == 1,
                         "branch": {1: 0, -1: 1}[direction],
                     }
                 )
@@ -137,15 +137,9 @@ print("calculations done")
 
 set_plot_asthetics()
 
-if "--mpc" in sys.argv:
-    figsize = (4, 1.2)
-else:
-    figsize = (6, 1.8)
+figsize = (4, 1.2) if "--mpc" in sys.argv else (6, 1.8)
 
-if "--png" in sys.argv:
-    format = "png"
-else:
-    format = "pdf"
+format = "png" if "--png" in sys.argv else "pdf"
 
 # There is a bug in the way PGF does clipping of filled paths
 matplotlib.pyplot.switch_backend("pdf")
@@ -177,7 +171,7 @@ rho_normalize.autoscale(all_data.loc[:, "clipped_rho"])
 for (i, j, _), facet_data in grid.facet_data():
     ax: Axes = grid.axes[i, j]
     ax._children.clear()
-    for branch in [0, 1]:
+    for branch in [0, 1]:  # noqa: B007
         branch_data = facet_data.query("branch == @branch")
         xs = branch_data.loc[:, "sigma"].to_numpy().reshape(-1, 1)
         ys = branch_data.loc[:, "step_norm"].to_numpy().reshape(-1, 1)
