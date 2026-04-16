@@ -33,14 +33,17 @@ classdef Quasi_Tensor_Wrapper < handle
                 step_norm = norm(step);
                 normed_step = step / step_norm;
 
-                if step_norm < sqrt(eps)
-                    % Skip update if step is too small
-                    break
-                end
-
                 predicted_diff = tensorprod(obj.approximation, normed_step, 1);
                 exact_diff = (current_derivative - obj.last_derivative) / step_norm;
                 correction_term = predicted_diff - exact_diff;
+
+                diff_error_bound = sqrt(2) * eps * ...
+                  (norm(current_derivative, "fro") + norm(obj.last_derivative, "fro")) / step_norm;
+                if diff_error_bound > obj.parameters.numerical_error_threshold * norm(exact_diff, "fro")
+                    % skip update if update is dominated by numerical errors
+                    printf("skip quasi-tensor update: %e errors vs %e diff norm", diff_error_bound, norm(exact_diff, "fro"));
+                    break
+                end
 
                 switch obj.parameters.type
                     case Quasi_Tensor_Type.POWELL_SYMMETRIC_BROYDEN
@@ -55,8 +58,9 @@ classdef Quasi_Tensor_Wrapper < handle
                         end
                 end
 
-                if abs(weighted_step' * normed_step) < 1e-2
+                if abs(weighted_step' * normed_step) < obj.parameters.orthogonality_threshold
                     % skip update if weighted_step is almost orthogonal to normed_step
+                    printf("skip quasi-tensor update: %e orthogonality", abs(weighted_step' * normed_step));
                     break
                 end
 
