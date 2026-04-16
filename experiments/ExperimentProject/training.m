@@ -30,12 +30,20 @@ function output = training(params, monitor)
         params = rmfield(params, "x0_type");
     end
 
+    % Determine quasi-tensor settings
+    [qt_params, params] = extract_params(params, "qt_");
+    if isfield(qt_params, "type") && qt_params.type ~= "OFF"
+        qt_params.p = params.p;
+        wrapper = Quasi_Tensor_Wrapper(f_handle, Quasi_Tensor_Parameters.from_struct(qt_params));
+        f_handle = @wrapper.evaluate;
+    end
+
     % n = size(x0, 1);
     % params.inner_stop_theta = 10^(log2(n)/4);
     % if params.p == 3
     %     params.inner_inner_stop_theta = 10^(log2(n)/2);
     % end
-    
+
     % Determine subproblem solver and AR3 parameters
     arp_parameters = ARP_Parameters.from_struct(params);
 
