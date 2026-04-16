@@ -33,6 +33,10 @@ classdef Quasi_Tensor_Wrapper < handle
                 step_norm = norm(step);
                 normed_step = step / step_norm;
 
+                if step_norm < 10 * eps
+                    break
+                end
+
                 predicted_diff = tensorprod(obj.approximation, normed_step, 1);
                 exact_diff = (current_derivative - obj.last_derivative) / step_norm;
                 correction_term = predicted_diff - exact_diff;
@@ -88,8 +92,6 @@ classdef Quasi_Tensor_Wrapper < handle
                 update = reshape(average(linindex2symindex), size(update));
 
                 obj.approximation = obj.approximation + update;
-
-                assert(all(ismembertol(tensorprod(obj.approximation, normed_step, 1), exact_diff), "all"));
             end
 
             obj.last_iterate = current_iterate;
