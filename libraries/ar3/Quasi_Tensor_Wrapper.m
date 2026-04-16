@@ -25,6 +25,10 @@ classdef Quasi_Tensor_Wrapper < handle
                     break
                 end
 
+                if obj.parameters.type == Quasi_Tensor_Type.CONSTANT
+                    break
+                end
+
                 step = current_iterate - obj.last_iterate;
                 step_norm = norm(step);
                 normed_step = step / step_norm;
