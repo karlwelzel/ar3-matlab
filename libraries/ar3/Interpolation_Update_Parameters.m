@@ -215,6 +215,17 @@ classdef Interpolation_Update_Parameters < Simple_Update_Parameters
 
                 if used_function_eval
                     obj.compute_actual_decrease(run, Function_Access_Type.TENTATIVE_ITERATE);
+
+                    % update quasi-tensor approximation, such that interpolation uses up-to-date information
+                    if isa(run.f_handle, "Quasi_Tensor_Wrapper")
+                        if run.parameters.p == 2
+                            run.H = run.f_handle.approximation
+                        elseif run.parameters.p == 3
+                            run.T = run.f_handle.approximation
+                        end
+                    end
+                    [taylor_poly, model_poly] = obj.construct_polynomials(run, sigma);
+                    interp_poly = [f_plus - polyval(taylor_poly, 1), taylor_poly];
                 end
 
                 % Update sigma depending on the value of rho (decrease_ratio)
