@@ -44,7 +44,7 @@ classdef Quasi_Tensor_Wrapper < Function_Wrapper
                   (norm(current_derivative, "fro") + norm(previous_derivative, "fro")) / step_norm;
                 if diff_error_bound > obj.parameters.numerical_error_threshold * norm(exact_diff, "fro")
                     % skip update if update is dominated by numerical errors
-                    printf("skip quasi-tensor update: %e errors vs %e diff norm\n", diff_error_bound, norm(exact_diff, "fro"));
+                    fprintf("skip quasi-tensor update: %e errors vs %e diff norm\n", diff_error_bound, norm(exact_diff, "fro"));
                     break
                 end
 
@@ -63,7 +63,7 @@ classdef Quasi_Tensor_Wrapper < Function_Wrapper
 
                 if abs(weighted_step' * normed_step) < obj.parameters.orthogonality_threshold
                     % skip update if weighted_step is almost orthogonal to normed_step
-                    printf("skip quasi-tensor update: %e orthogonality\n", abs(weighted_step' * normed_step));
+                    fprintf("skip quasi-tensor update: %e orthogonality\n", abs(weighted_step' * normed_step));
                     break
                 end
 
@@ -117,7 +117,11 @@ classdef Quasi_Tensor_Wrapper < Function_Wrapper
                 previous_iterate = obj.last_iterate;
                 if obj.parameters.p == 2
                     [fun, der1f] = evaluate@Function_Wrapper(obj, x, access_type);
-                    obj.update_approximation(x, previous_iterate, der1f, obj.last_derivative, der1f, obj.last_gradient);
+                    if ~(obj.parameters.update_if_tentative && ...
+                         access_type == Function_Access_Type.NEW_ITERATE && ...
+                         all(x == obj.last_tentative_iterate))
+                        obj.update_approximation(x, previous_iterate, der1f, obj.last_derivative, der1f, obj.last_gradient);
+                    end
                     der2f = obj.approximation;
                     if access_type == Function_Access_Type.NEW_ITERATE
                         % obj.last_iterate = x; % already done by Function_Wrapper.evaluate
@@ -126,7 +130,11 @@ classdef Quasi_Tensor_Wrapper < Function_Wrapper
                     end
                 elseif obj.parameters.p == 3
                     [fun, der1f, der2f] = evaluate@Function_Wrapper(obj, x, access_type);
-                    obj.update_approximation(x, previous_iterate, der2f, obj.last_derivative, der1f, obj.last_gradient);
+                    if ~(obj.parameters.update_if_tentative && ...
+                         access_type == Function_Access_Type.NEW_ITERATE && ...
+                         all(x == obj.last_tentative_iterate))
+                        obj.update_approximation(x, previous_iterate, der2f, obj.last_derivative, der1f, obj.last_gradient);
+                    end
                     der3f = obj.approximation;
                     if access_type == Function_Access_Type.NEW_ITERATE
                         % obj.last_iterate = x; % already done by Function_Wrapper.evaluate
