@@ -153,7 +153,8 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                         delta_x = randn(dim, 1);
                         delta_x = delta_x * 10^(-2 * i + 2);
 
-                        f_plus = run.evaluate_function(run.x + delta_x, Function_Access_Type.TENTATIVE_ITERATE);
+                        f_plus = run.evaluate_function(run.x + delta_x, Function_Access_Type.RAW);
+                        run.f_handle.eval_counter = run.f_handle.eval_counter + [1 0 0 0];
                         if abs(f_plus) > (1 / eps) * abs(f)
                             % This function value is unrealistically large, ignore
                             continue
