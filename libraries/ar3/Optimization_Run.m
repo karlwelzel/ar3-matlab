@@ -3,7 +3,7 @@ classdef (Abstract) Optimization_Run < handle
 
     properties
         parameters (1, 1) Optimization_Parameters = ARP_Parameters
-        f_handle (1, 1) function_handle = @(x) 0
+        f_handle (1, 1) Function_Wrapper = @(x) 0
         x (:, 1) double = nan
         iteration (1, 1) double {mustBeInteger, mustBeNonnegative} = 1
         history (1, :) struct

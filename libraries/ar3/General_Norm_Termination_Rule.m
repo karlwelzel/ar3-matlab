@@ -13,11 +13,11 @@ classdef General_Norm_Termination_Rule < Termination_Rule
             % algorithms with nonsmooth norms" equation (2.6)
             norm_step = norm(run.x);
             if obj.outer_run.parameters.p == 3
-                [~, der1m] = run.f_handle(run.x);
+                [~, der1m] = run.f_handle.evaluate(run.x, Function_Access_Type.RAW);
                 norm_der1t = norm(der1m - run.sigma * ( ...
                                                        norm_step^obj.outer_run.parameters.p * run.x));
             elseif obj.outer_run.parameters.p == 2
-                norm_der1t = norm(run.f_handle(run.x));
+                norm_der1t = norm(run.f_handle.evaluate(run.x, Function_Access_Type.RAW));
             else
                 error("Invalid order p");
             end

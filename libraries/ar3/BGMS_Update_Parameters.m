@@ -52,8 +52,9 @@ classdef BGMS_Update_Parameters < Sigma_Update_Parameters
                     run.current_history_row.rho_den = predicted_decrease;
 
                     % Always compute function value for debugging
-                    actual_decrease = obj.compute_actual_decrease(run);
+                    actual_decrease = obj.compute_actual_decrease(run, Function_Access_Type.RAW);
                     run.current_history_row.rho_num = actual_decrease;
+                    used_function_eval = true;
 
                     relative_decrease = predicted_decrease / max(1, abs(run.f));
                     relative_step_norm = norm(run.step, "inf") / max(1, norm(run.x, "inf"));
@@ -84,8 +85,13 @@ classdef BGMS_Update_Parameters < Sigma_Update_Parameters
                         run.step = nan; % Don't update iterate
 
                         % We did not use the function eval, so it is not counted
-                        run.total_function_evals = run.total_function_evals - 1;
+                        used_function_eval = false;
                     end
+
+                    if used_function_eval
+                        obj.compute_actual_decrease(run, Function_Access_Type.TENTATIVE_ITERATE);
+                    end
+
                     run.log_metrics();
                     j = j + 1;
                 end

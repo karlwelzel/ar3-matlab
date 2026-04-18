@@ -36,6 +36,8 @@ function output = training(params, monitor)
         qt_params.p = params.p;
         wrapper = Quasi_Tensor_Wrapper(f_handle, Quasi_Tensor_Parameters.from_struct(qt_params));
         f_handle = @wrapper.evaluate;
+    else
+        f_handle = Function_Wrapper(f_handle);
     end
 
     % n = size(x0, 1);

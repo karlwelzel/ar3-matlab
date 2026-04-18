@@ -88,8 +88,8 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
             end
         end
 
-        function [decr] = compute_actual_decrease(obj, run)
-            f_plus = run.evaluate_function(run.x + run.step);
+        function [decr] = compute_actual_decrease(obj, run, access_type)
+            f_plus = run.evaluate_function(run.x + run.step, access_type);
             decr = run.f - f_plus;
         end
 
@@ -105,13 +105,13 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                 p = run.parameters.p;
 
                 if p == 1
-                    [f, der1f] = run.f_handle(run.x);
+                    [f, der1f] = run.f_handle.evaluate(run.x, Function_Access_Type.NEW_ITERATE);
                     T0 = der1f;
                 elseif p == 2
-                    [f, der1f, der2f] = run.f_handle(run.x);
+                    [f, der1f, der2f] = run.f_handle.evaluate(run.x, Function_Access_Type.NEW_ITERATE);
                     T0 = der2f;
                 elseif p == 3
-                    [f, der1f, der2f, der3f] = run.f_handle(run.x);
+                    [f, der1f, der2f, der3f] = run.f_handle.evaluate(run.x, Function_Access_Type.NEW_ITERATE);
                     T0 = der3f;
                 end
 
@@ -122,14 +122,13 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                         % norm(delta_x) ~ sqrt(eps) is optimal for finite differences
                         delta_x = delta_x * sqrt(eps);
                         if p == 1
-                            [~, T] = run.f_handle(run.x + delta_x);
+                            [~, T] = run.f_handle.evaluate(run.x + delta_x, Function_Access_Type.TENTATIVE_ITERATE);
                         elseif p == 2
-                            [~, ~, T] = run.f_handle(run.x + delta_x);
+                            [~, ~, T] = run.f_handle.evaluate(run.x + delta_x, Function_Access_Type.TENTATIVE_ITERATE);
                         elseif p == 3
-                            [~, ~, ~, T] = run.f_handle(run.x + delta_x);
+                            [~, ~, ~, T] = run.f_handle.evaluate(run.x + delta_x, ...
+                                                                 Function_Access_Type.TENTATIVE_ITERATE);
                         end
-                        run.total_function_evals = run.total_function_evals + 1;
-                        run.total_derivative_evals = run.total_derivative_evals + 1;
                         sigma0 = max(norm(T - T0, 'fro') / norm(delta_x), sigma0);
                     end
                 elseif obj.sigma0 == "INVEXIFICATION"
@@ -154,7 +153,7 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
                         delta_x = randn(dim, 1);
                         delta_x = delta_x * 10^(-2 * i + 2);
 
-                        f_plus = run.evaluate_function(run.x + delta_x);
+                        f_plus = run.evaluate_function(run.x + delta_x, Function_Access_Type.TENTATIVE_ITERATE);
                         if abs(f_plus) > (1 / eps) * abs(f)
                             % This function value is unrealistically large, ignore
                             continue

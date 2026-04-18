@@ -74,7 +74,7 @@ classdef ARP_Parameters < Optimization_Parameters
             arguments (Input)
                 obj
 
-                f_handle (1, 1) function_handle
+                f_handle (1, 1) Function_Wrapper
                 % A handle to evaluate the function value and derivatives of
                 % the objective function, up to 3 depending on the number of
                 % output arguments

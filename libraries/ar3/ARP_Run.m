@@ -15,8 +15,6 @@ classdef ARP_Run < Optimization_Run
         norm_g (1, 1) double = nan
         sigma (1, 1) double = nan
         start_time (1, 1) uint64 = nan
-        total_function_evals (1, 1) double {mustBeInteger, mustBeNonnegative} = 0
-        total_derivative_evals (1, 1) double {mustBeInteger, mustBeNonnegative} = 0
         total_model_evals (1, 1) double {mustBeInteger, mustBeNonnegative} = 0
         total_model_derivative_evals (1, 1) double {mustBeInteger, mustBeNonnegative} = 0
         total_chol (1, 1) double {mustBeInteger, mustBeInteger} = 0
@@ -37,7 +35,9 @@ classdef ARP_Run < Optimization_Run
                                              norm_g = nan, ...
                                              norm_step = nan, ...
                                              total_fun = nan, ...
-                                             total_der = nan, ...
+                                             total_der1f = nan, ...
+                                             total_der2f = nan, ...
+                                             total_der3f = nan, ...
                                              total_solves = nan, ...
                                              total_model = nan, ...
                                              total_model_der = nan, ...
@@ -73,16 +73,14 @@ classdef ARP_Run < Optimization_Run
             log_metrics@Optimization_Run(obj);
         end
 
-        function [f_value] = evaluate_function(obj, x_plus)
-            f_value = obj.f_handle(x_plus);
-            obj.total_function_evals = obj.total_function_evals + 1;
+        function [f_value] = evaluate_function(obj, x_plus, access_type)
+            f_value = obj.f_handle.evaluate(x_plus, access_type);
         end
 
         function update_derivatives(obj, order, sigma)
             % Ensure that the derivatives are calculated in the first iteration
             if obj.iteration == 1
                 obj.step = zeros(length(obj.x), 1);
-                obj.total_function_evals = obj.total_function_evals + 1;
             end
 
             if ~(isscalar(obj.step) && isnan(obj.step))
@@ -91,24 +89,25 @@ classdef ARP_Run < Optimization_Run
 
                 % Update derivatives
                 if order == 1
-                    [obj.f, obj.g] = obj.f_handle(obj.x);
+                    [obj.f, obj.g] = obj.f_handle.evaluate(obj.x, Function_Access_Type.NEW_ITERATE);
                 elseif order == 2
-                    [obj.f, obj.g, obj.H] = obj.f_handle(obj.x);
+                    [obj.f, obj.g, obj.H] = obj.f_handle.evaluate(obj.x, Function_Access_Type.NEW_ITERATE);
                 elseif order == 3
-                    [obj.f, obj.g, obj.H, obj.T] = obj.f_handle(obj.x);
+                    [obj.f, obj.g, obj.H, obj.T] = obj.f_handle.evaluate(obj.x, Function_Access_Type.NEW_ITERATE);
                 end
 
                 % Update counters
                 obj.norm_g = norm(obj.g);
                 obj.sigma = sigma;
-                obj.total_derivative_evals = obj.total_derivative_evals + 1;
             end
 
             % Track history
             obj.current_history_row.f = obj.f;
             obj.current_history_row.norm_g = obj.norm_g;
-            obj.current_history_row.total_fun = obj.total_function_evals;
-            obj.current_history_row.total_der = obj.total_derivative_evals;
+            obj.current_history_row.total_fun = obj.f_handle.eval_counter(1);
+            obj.current_history_row.total_der1f = obj.f_handle.eval_counter(2);
+            obj.current_history_row.total_der2f = obj.f_handle.eval_counter(3);
+            obj.current_history_row.total_der3f = obj.f_handle.eval_counter(4);
             obj.current_history_row.total_solves = obj.iteration - 1;
             obj.current_history_row.total_model = obj.total_model_evals;
             obj.current_history_row.total_model_der = obj.total_model_derivative_evals;
@@ -140,18 +139,18 @@ classdef ARP_Run < Optimization_Run
                     obj.total_chol = 0;
                     obj.total_hvp = obj.total_hvp + num_iterations;
                 elseif class(subproblem_parameters) == "Fminunc_Parameters"
-                    model_handle = @(s) ar2_model_derivatives(s, 0, obj.g, obj.H, sigma);
+                    model_handle = Function_Wrapper(@(s) ar2_model_derivatives(s, 0, obj.g, obj.H, sigma));
                     [obj.subproblem_status, obj.step, sub_history] = ...
                         subproblem_parameters.run(model_handle, zeros(length(obj.x), 1));
                     obj.total_model_evals = obj.total_model_evals + sub_history(end).total_fun;
-                    obj.total_model_derivative_evals = obj.total_model_derivative_evals + sub_history(end).total_der;
+                    obj.total_model_derivative_evals = obj.total_model_derivative_evals + sub_history(end).total_der1f;
                     obj.total_chol = 0;
                     obj.total_hvp = 0;
                 else
                     error("Invalid subproblem solver: " + class(obj.parameters.subproblem_parameters));
                 end
             elseif obj.parameters.p == 3
-                model_handle = @(s) ar3_model_derivatives(s, 0, obj.g, obj.H, obj.T, sigma);
+                model_handle = Function_Wrapper(@(s) ar3_model_derivatives(s, 0, obj.g, obj.H, obj.T, sigma));
                 if class(subproblem_parameters) == "ARP_Parameters" && subproblem_parameters.p == 2
                     sigma_min = subproblem_parameters.sigma_update_parameters.sigma_min;
                     subproblem_parameters.sigma_update_parameters.sigma0 = sigma_min;
@@ -170,7 +169,7 @@ classdef ARP_Run < Optimization_Run
                 end
 
                 obj.total_model_evals = obj.total_model_evals + sub_history(end).total_fun;
-                obj.total_model_derivative_evals = obj.total_model_derivative_evals + sub_history(end).total_der;
+                obj.total_model_derivative_evals = obj.total_model_derivative_evals + sub_history(end).total_der1f;
                 if isa(obj.H, "function_handle") && isfield(sub_history, "total_hvp")
                     obj.total_hvp = obj.total_hvp + sub_history(end).total_fun + sub_history(end).total_hvp;
                 else
