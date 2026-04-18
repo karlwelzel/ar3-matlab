@@ -1,21 +1,20 @@
-classdef Quasi_Tensor_Wrapper < handle
+classdef Quasi_Tensor_Wrapper < Function_Wrapper
     properties
-        f_handle (1, 1) function_handle = @(x) 0
         parameters (1, 1) Quasi_Tensor_Parameters
         approximation double = nan
-        last_iterate (:, 1) double = nan
-        last_derivative double = nan
-        last_gradient double = nan
+        last_derivative double = nan % derivative at obj.last_iterate
+        last_gradient double = nan % gradient at obj.last_iterate
     end
 
     methods
 
         function obj = Quasi_Tensor_Wrapper(f_handle, parameters)
-            obj.f_handle = f_handle;
+            obj = obj@Function_Wrapper(f_handle)
             obj.parameters = parameters;
         end
 
-        function update_approximation(obj, current_iterate, current_derivative, current_gradient)
+        function update_approximation(obj, current_iterate, previous_iterate, current_derivative, ...
+                                      previous_derivative, current_gradient, previous_gradient)
             n = length(current_iterate);
             p = obj.parameters.p;
 
@@ -29,7 +28,7 @@ classdef Quasi_Tensor_Wrapper < handle
                     break
                 end
 
-                step = current_iterate - obj.last_iterate;
+                step = current_iterate - previous_iterate;
                 step_norm = norm(step);
                 normed_step = step / step_norm;
 
@@ -38,14 +37,14 @@ classdef Quasi_Tensor_Wrapper < handle
                 end
 
                 predicted_diff = tensorprod(obj.approximation, normed_step, 1);
-                exact_diff = (current_derivative - obj.last_derivative) / step_norm;
+                exact_diff = (current_derivative - previous_derivative) / step_norm;
                 correction_term = predicted_diff - exact_diff;
 
                 diff_error_bound = sqrt(2) * eps * ...
-                  (norm(current_derivative, "fro") + norm(obj.last_derivative, "fro")) / step_norm;
+                  (norm(current_derivative, "fro") + norm(previous_derivative, "fro")) / step_norm;
                 if diff_error_bound > obj.parameters.numerical_error_threshold * norm(exact_diff, "fro")
                     % skip update if update is dominated by numerical errors
-                    printf("skip quasi-tensor update: %e errors vs %e diff norm", diff_error_bound, norm(exact_diff, "fro"));
+                    printf("skip quasi-tensor update: %e errors vs %e diff norm\n", diff_error_bound, norm(exact_diff, "fro"));
                     break
                 end
 
@@ -53,7 +52,7 @@ classdef Quasi_Tensor_Wrapper < handle
                     case Quasi_Tensor_Type.POWELL_SYMMETRIC_BROYDEN
                         weighted_step = normed_step;
                     case Quasi_Tensor_Type.DAVIDON_FLETCHER_POWELL
-                        weighted_step = (current_gradient - obj.last_gradient) / step_norm;
+                        weighted_step = (current_gradient - previous_gradient) / step_norm;
                     case Quasi_Tensor_Type.SYMMETRIC_RANK_ONE_LIKE
                         if p == 2
                             weighted_step = correction_term / norm(correction_term);
@@ -64,7 +63,7 @@ classdef Quasi_Tensor_Wrapper < handle
 
                 if abs(weighted_step' * normed_step) < obj.parameters.orthogonality_threshold
                     % skip update if weighted_step is almost orthogonal to normed_step
-                    printf("skip quasi-tensor update: %e orthogonality", abs(weighted_step' * normed_step));
+                    printf("skip quasi-tensor update: %e orthogonality\n", abs(weighted_step' * normed_step));
                     break
                 end
 
@@ -93,44 +92,48 @@ classdef Quasi_Tensor_Wrapper < handle
 
                 obj.approximation = obj.approximation + update;
             end
-
-            obj.last_iterate = current_iterate;
-            obj.last_derivative = current_derivative;
-            obj.last_gradient = current_gradient;
         end
 
-        function [fun, der1f, der2f, der3f, exact_der3f] = evaluate(obj, x)
+        function [fun, der1f, der2f, der3f] = evaluate(obj, x, access_type)
             arguments (Input)
                 obj
 
                 x (:, 1) double
+                access_type (1, 1) Function_Access_Type
             end
 
-            if nargout == 1
-                [fun] = obj.f_handle(x);
-            elseif nargout == 2
-                [fun, der1f] = obj.f_handle(x);
-            elseif nargout == 3
+            if access_type == Function_Access_Type.RAW || ...
+              (access_type == Function_Access_Type.TENTATIVE_ITERATE && ~obj.parameters.update_if_tentative)
+                if nargout == 1
+                    [fun] = evaluate@Function_Wrapper(obj, x, access_type);
+                elseif nargout == 2
+                    [fun, der1f] = evaluate@Function_Wrapper(obj, x, access_type);
+                elseif nargout == 3
+                    [fun, der1f, der2f] = evaluate@Function_Wrapper(obj, x, access_type);
+                elseif nargout == 4
+                    [fun, der1f, der2f, der3f] = evaluate@Function_Wrapper(obj, x, access_type);
+                end
+            else
+                previous_iterate = obj.last_iterate;
                 if obj.parameters.p == 2
-                    [fun, der1f] = obj.f_handle(x);
-                    obj.update_approximation(x, der1f, der1f);
+                    [fun, der1f] = evaluate@Function_Wrapper(obj, x, access_type);
+                    obj.update_approximation(x, previous_iterate, der1f, obj.last_derivative, der1f, obj.last_gradient);
                     der2f = obj.approximation;
-                else
-                    [fun, der1f, der2f] = obj.f_handle(x);
-                end
-            elseif nargout == 4
-                if obj.parameters.p == 3
-                    [fun, der1f, der2f] = obj.f_handle(x);
-                    obj.update_approximation(x, der2f, der1f);
+                    if access_type == Function_Access_Type.NEW_ITERATE
+                        % obj.last_iterate = x; % already done by Function_Wrapper.evaluate
+                        obj.last_derivative = der1f;
+                        obj.last_gradient = der1f;
+                    end
+                elseif obj.parameters.p == 3
+                    [fun, der1f, der2f] = evaluate@Function_Wrapper(obj, x, access_type);
+                    obj.update_approximation(x, previous_iterate, der2f, obj.last_derivative, der1f, obj.last_gradient);
                     der3f = obj.approximation;
-                else
-                    [fun, der1f, der2f, der3f] = obj.f_handle(x);
+                    if access_type == Function_Access_Type.NEW_ITERATE
+                        % obj.last_iterate = x; % already done by Function_Wrapper.evaluate
+                        obj.last_derivative = der2f;
+                        obj.last_gradient = der1f;
+                    end
                 end
-            elseif nargout == 5 && obj.parameters.p == 3
-                [fun, der1f, der2f, exact_der3f] = obj.f_handle(x);
-                obj.update_approximation(x, der2f, der1f);
-                der3f = obj.approximation;
-                fprintf("rel. error            = %f\n", norm(der3f - exact_der3f, "fro") / norm(exact_der3f, "fro"));
             end
         end
 
