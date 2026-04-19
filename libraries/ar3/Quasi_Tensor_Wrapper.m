@@ -18,80 +18,83 @@ classdef Quasi_Tensor_Wrapper < Function_Wrapper
             n = length(current_iterate);
             p = obj.parameters.p;
 
-            for k = 1
-                if isscalar(obj.approximation) && isnan(obj.approximation)
-                    obj.approximation = zeros(repmat(n, 1, p));
-                    break
-                end
-
-                if obj.parameters.type == Quasi_Tensor_Type.CONSTANT
-                    break
-                end
-
-                step = current_iterate - previous_iterate;
-                step_norm = norm(step);
-                normed_step = step / step_norm;
-
-                if step_norm < 10 * eps
-                    break
-                end
-
-                predicted_diff = tensorprod(obj.approximation, normed_step, 1);
-                exact_diff = (current_derivative - previous_derivative) / step_norm;
-                correction_term = predicted_diff - exact_diff;
-
-                diff_error_bound = sqrt(2) * eps * ...
-                  (norm(current_derivative, "fro") + norm(previous_derivative, "fro")) / step_norm;
-                if diff_error_bound > obj.parameters.numerical_error_threshold * norm(exact_diff, "fro")
-                    % skip update if update is dominated by numerical errors
-                    fprintf("skip quasi-tensor update: %e errors vs %e diff norm\n", diff_error_bound, norm(exact_diff, "fro"));
-                    break
-                end
-
-                switch obj.parameters.type
-                    case Quasi_Tensor_Type.POWELL_SYMMETRIC_BROYDEN
-                        weighted_step = normed_step;
-                    case Quasi_Tensor_Type.DAVIDON_FLETCHER_POWELL
-                        weighted_step = (current_gradient - previous_gradient) / step_norm;
-                    case Quasi_Tensor_Type.SYMMETRIC_RANK_ONE_LIKE
-                        if p == 2
-                            weighted_step = correction_term / norm(correction_term);
-                        elseif p == 3
-                            [weighted_step, ~] = eigs(correction_term, 1, "largestabs");
-                        end
-                end
-
-                if abs(weighted_step' * normed_step) < obj.parameters.orthogonality_threshold
-                    % skip update if weighted_step is almost orthogonal to normed_step
-                    fprintf("skip quasi-tensor update: %e orthogonality\n", abs(weighted_step' * normed_step));
-                    break
-                end
-
-                update = zeros(size(obj.approximation));
-                for j = 1:p
-                    weighted_step_outer = tensor_outer_product(weighted_step, j);
-                    correction_inner = tensor_inner_product(correction_term, normed_step, j - 1);
-                    update = update + (-1)^j * nchoosek(p, j) * (weighted_step' * normed_step)^(-j) * ...
-                      tensorprod(weighted_step_outer, correction_inner, NumDimensionsA = j);
-                end
-
-                % Symmetrize update using approach from tensor toolbox:
-                % https://gitlab.com/tensors/tensor_toolbox/-/blob/v3.6/@tensor/symmetrize.m
-                sz = size(update);
-                if p == 2
-                    [index1, index2] = ind2sub(sz, 1:numel(update));
-                    index = sort([index1; index2]);
-                    linindex2symindex = sub2ind(sz, index(1, :), index(2, :));
-                elseif p == 3
-                    [index1, index2, index3] = ind2sub(sz, 1:numel(update));
-                    index = sort([index1; index2; index3]);
-                    linindex2symindex = sub2ind(sz, index(1, :), index(2, :), index(3, :));
-                end
-                average = accumarray(linindex2symindex', update(:)) ./ accumarray(linindex2symindex', 1);
-                update = reshape(average(linindex2symindex), size(update));
-
-                obj.approximation = obj.approximation + update;
+            if isscalar(obj.approximation) && isnan(obj.approximation)
+                obj.approximation = zeros(repmat(n, 1, p));
+                return
             end
+
+            if ~allfinite(current_derivative)
+                fprintf("skip quasi-tensor update: bad derivative\n")
+                return
+            end
+
+            if obj.parameters.type == Quasi_Tensor_Type.CONSTANT
+                return
+            end
+
+            step = current_iterate - previous_iterate;
+            step_norm = norm(step);
+            normed_step = step / step_norm;
+
+            if step_norm < 10 * eps
+                return
+            end
+
+            predicted_diff = tensorprod(obj.approximation, normed_step, 1);
+            exact_diff = (current_derivative - previous_derivative) / step_norm;
+            correction_term = predicted_diff - exact_diff;
+
+            diff_error_bound = sqrt(2) * eps * ...
+                (norm(current_derivative, "fro") + norm(previous_derivative, "fro")) / step_norm;
+            if diff_error_bound > obj.parameters.numerical_error_threshold * norm(exact_diff, "fro")
+                % skip update if update is dominated by numerical errors
+                fprintf("skip quasi-tensor update: %e errors vs %e diff norm\n", diff_error_bound, norm(exact_diff, "fro"));
+                return
+            end
+
+            switch obj.parameters.type
+                case Quasi_Tensor_Type.POWELL_SYMMETRIC_BROYDEN
+                    weighted_step = normed_step;
+                case Quasi_Tensor_Type.DAVIDON_FLETCHER_POWELL
+                    weighted_step = (current_gradient - previous_gradient) / step_norm;
+                case Quasi_Tensor_Type.SYMMETRIC_RANK_ONE_LIKE
+                    if p == 2
+                        weighted_step = correction_term / norm(correction_term);
+                    elseif p == 3
+                        [weighted_step, ~] = eigs(correction_term, 1, "largestabs");
+                    end
+            end
+
+            if abs(weighted_step' * normed_step) < obj.parameters.orthogonality_threshold
+                % skip update if weighted_step is almost orthogonal to normed_step
+                fprintf("skip quasi-tensor update: %e orthogonality\n", abs(weighted_step' * normed_step));
+                return
+            end
+
+            update = zeros(size(obj.approximation));
+            for j = 1:p
+                weighted_step_outer = tensor_outer_product(weighted_step, j);
+                correction_inner = tensor_inner_product(correction_term, normed_step, j - 1);
+                update = update + (-1)^j * nchoosek(p, j) * (weighted_step' * normed_step)^(-j) * ...
+                    tensorprod(weighted_step_outer, correction_inner, NumDimensionsA = j);
+            end
+
+            % Symmetrize update using approach from tensor toolbox:
+            % https://gitlab.com/tensors/tensor_toolbox/-/blob/v3.6/@tensor/symmetrize.m
+            sz = size(update);
+            if p == 2
+                [index1, index2] = ind2sub(sz, 1:numel(update));
+                index = sort([index1; index2]);
+                linindex2symindex = sub2ind(sz, index(1, :), index(2, :));
+            elseif p == 3
+                [index1, index2, index3] = ind2sub(sz, 1:numel(update));
+                index = sort([index1; index2; index3]);
+                linindex2symindex = sub2ind(sz, index(1, :), index(2, :), index(3, :));
+            end
+            average = accumarray(linindex2symindex', update(:)) ./ accumarray(linindex2symindex', 1);
+            update = reshape(average(linindex2symindex), size(update));
+
+            obj.approximation = obj.approximation + update;
         end
 
         function [fun, der1f, der2f, der3f] = evaluate(obj, x, access_type)

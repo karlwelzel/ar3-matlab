@@ -42,6 +42,10 @@ classdef MCMR_Parameters < Optimization_Parameters
                 error("MCMR needs an explicit representation of the matrix, but a function handle was provided");
             end
 
+            if any(isnan(mat), "all")
+                error("matrix is NaN")
+            end
+
             residual = @(x) c + mat * x;
             n = length(c);
             identity = eye(n, n);
