@@ -56,9 +56,10 @@ quasi_tensor_type = {
     'OFF' % full derivatives
     % 'CONSTANT'
     % 'POWELL_SYMMETRIC_BROYDEN'
+    % 'POWELL_SYMMETRIC_BROYDEN+'
     % 'DAVIDON_FLETCHER_POWELL'
     % 'SYMMETRIC_RANK_ONE_LIKE'
-}
+};
 
 % Three update options for the main algorithm
 update_type = {
