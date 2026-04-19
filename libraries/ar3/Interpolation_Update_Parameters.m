@@ -219,9 +219,9 @@ classdef Interpolation_Update_Parameters < Simple_Update_Parameters
                     % update quasi-tensor approximation, such that interpolation uses up-to-date information
                     if isa(run.f_handle, "Quasi_Tensor_Wrapper")
                         if run.parameters.p == 2
-                            run.H = run.f_handle.approximation
+                            run.H = run.f_handle.approximation;
                         elseif run.parameters.p == 3
-                            run.T = run.f_handle.approximation
+                            run.T = run.f_handle.approximation;
                         end
                     end
                     [taylor_poly, model_poly] = obj.construct_polynomials(run, sigma);
