@@ -42,8 +42,12 @@ classdef MCMR_Parameters < Optimization_Parameters
                 error("MCMR needs an explicit representation of the matrix, but a function handle was provided");
             end
 
-            if any(isnan(mat), "all")
-                error("matrix is NaN")
+            if ~allfinite(mat)
+                fprintf("MCMR: mat has non-finite entries");
+                status = Optimization_Status.ILL_CONDITIONED;
+                best_x = zeros(shape(c));
+                iteration = 0;
+                return
             end
 
             residual = @(x) c + mat * x;

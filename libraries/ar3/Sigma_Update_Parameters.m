@@ -84,7 +84,7 @@ classdef (Abstract) Sigma_Update_Parameters < Parameters
             end
 
             if decr < -eps
-                error("The predicted decrease is negative");
+                fprintf("The predicted decrease is negative: %e\n", decr);
             end
         end
 
