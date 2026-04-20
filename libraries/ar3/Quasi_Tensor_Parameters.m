@@ -13,7 +13,7 @@ classdef Quasi_Tensor_Parameters < Parameters
             obj = Quasi_Tensor_Parameters;
             if isfield(params, "type") && endsWith(params.type, "+")
                 obj.update_if_tentative = true;
-                params.type = regexprep(params.type, "\+$", "")
+                params.type = regexprep(params.type, "\+$", "");
             end
             obj = obj.update(params);
         end
