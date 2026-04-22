@@ -42,10 +42,10 @@ classdef MCMR_Parameters < Optimization_Parameters
                 error("MCMR needs an explicit representation of the matrix, but a function handle was provided");
             end
 
-            if ~allfinite(mat)
-                fprintf("MCMR: mat has non-finite entries");
+            if ~allfinite(mat) || any(mat > 1e100, "all")
+                fprintf("MCMR: mat has non-finite entries\n");
                 status = Optimization_Status.ILL_CONDITIONED;
-                best_x = zeros(shape(c));
+                best_x = zeros(size(c));
                 iteration = 0;
                 return
             end

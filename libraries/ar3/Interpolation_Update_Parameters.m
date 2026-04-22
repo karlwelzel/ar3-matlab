@@ -168,7 +168,11 @@ classdef Interpolation_Update_Parameters < Simple_Update_Parameters
                 run.current_history_row.rho_den = predicted_decrease;
 
                 if predicted_decrease < -eps
-                    error("The predicted decrease is negative");
+                    fprintf("The predicted decrease is negative: %e\n", predicted_decrease);
+
+                    % Terminate algorithm
+                    run.status = Optimization_Status.ILL_CONDITIONED;
+                    break
                 end
 
                 % Always compute function value / actual decrease for debugging
